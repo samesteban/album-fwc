@@ -1,0 +1,6 @@
+{
+  "name": "Control de Álbum Mundial",
+  "description": "Una aplicación web progresiva para gestionar el progreso, las láminas repetidas y las faltantes del álbum de fútbol de 48 selecciones.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
