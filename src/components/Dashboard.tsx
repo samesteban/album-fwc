@@ -15,6 +15,7 @@ interface DashboardProps {
   onUpdateCount: (cardId: string, delta: number) => void;
   onSelectSection: (sectionId: string) => void;
   onResetCollection: () => void;
+  syncStatus?: string;
 }
 
 export default function Dashboard({
@@ -23,6 +24,7 @@ export default function Dashboard({
   onUpdateCount,
   onSelectSection,
   onResetCollection,
+  syncStatus,
 }: DashboardProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [showResetConfirm, setShowResetConfirm] = useState(false);

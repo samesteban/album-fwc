@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Section, Card, CollectionState, CollectionStats } from './types';
+import { Section, Card, CollectionState, CollectionStats, type StorageV2 } from './types';
 
 // Metadatos oficiales de las secciones en el orden exacto especificado
 export const SECTIONS_METADATA: { id: string; name: string; type: 'team' | 'special'; flag: string }[] = [
@@ -127,28 +127,131 @@ export function buildInitialSections(): Section[] {
   });
 }
 
-const LOCAL_STORAGE_KEY = 'album_mundial_48_collection_state_v1';
+const LOCAL_STORAGE_KEY_V1 = 'album_mundial_48_collection_state_v1';
+const LOCAL_STORAGE_KEY_V2 = 'album_mundial_48_album_data_v2';
 
-// Carga el estado guardado en LocalStorage
+// ── Storage V2 (with timestamps) ───────────────────────────────
+
+/**
+ * Load collection state from LocalStorage.
+ * Supports both v1 (legacy) and v2 (with timestamps) formats.
+ */
 export function loadCollectionState(): CollectionState {
   try {
-    const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (saved) {
-      return JSON.parse(saved);
+    // Try v2 first
+    const v2Raw = localStorage.getItem(LOCAL_STORAGE_KEY_V2);
+    if (v2Raw) {
+      const v2: StorageV2 = JSON.parse(v2Raw);
+      if (v2.version === 2 && v2.collection) {
+        return v2.collection;
+      }
+    }
+
+    // Fallback to v1 (legacy format)
+    const v1Raw = localStorage.getItem(LOCAL_STORAGE_KEY_V1);
+    if (v1Raw) {
+      return JSON.parse(v1Raw);
     }
   } catch (error) {
-    console.error("Error al cargar localStorage, se usará estado vacío", error);
+    console.error('Error al cargar localStorage, se usará estado vacío', error);
   }
   return {};
 }
 
-// Guarda de forma segura el estado en LocalStorage
-export function saveCollectionState(state: CollectionState): void {
+/**
+ * Load timestamps from LocalStorage (v2 format only).
+ */
+export function loadTimestamps(): Record<string, string> {
   try {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(state));
-  } catch (error) {
-    console.error("Error al guardar en localStorage", error);
+    const v2Raw = localStorage.getItem(LOCAL_STORAGE_KEY_V2);
+    if (v2Raw) {
+      const v2: StorageV2 = JSON.parse(v2Raw);
+      if (v2.version === 2 && v2.timestamps) {
+        return v2.timestamps;
+      }
+    }
+  } catch {
+    // Silent fallback
   }
+  return {};
+}
+
+/**
+ * Save collection state and timestamps in v2 format.
+ */
+export function saveCollectionState(
+  collection: CollectionState,
+  timestamps?: Record<string, string>
+): void {
+  try {
+    const existing = loadTimestamps();
+    const data: StorageV2 = {
+      version: 2,
+      collection,
+      timestamps: timestamps ?? existing,
+    };
+    localStorage.setItem(LOCAL_STORAGE_KEY_V2, JSON.stringify(data));
+  } catch (error) {
+    console.error('Error al guardar en localStorage', error);
+  }
+}
+
+/**
+ * Check if existing data is in legacy v1 format (needs migration).
+ */
+export function hasLegacyData(): boolean {
+  return !!localStorage.getItem(LOCAL_STORAGE_KEY_V1);
+}
+
+/**
+ * Migrate v1 data to v2 format (adds timestamps).
+ * Returns the migrated timestamps.
+ */
+export function migrateFromV1(): Record<string, string> {
+  const now = new Date().toISOString();
+  const timestamps: Record<string, string> = {};
+
+  try {
+    const v1Raw = localStorage.getItem(LOCAL_STORAGE_KEY_V1);
+    if (v1Raw) {
+      const collection: CollectionState = JSON.parse(v1Raw);
+      for (const cardId of Object.keys(collection)) {
+        timestamps[cardId] = now;
+      }
+      // Save in v2 format
+      const data: StorageV2 = {
+        version: 2,
+        collection,
+        timestamps,
+      };
+      localStorage.setItem(LOCAL_STORAGE_KEY_V2, JSON.stringify(data));
+      // Remove old key
+      localStorage.removeItem(LOCAL_STORAGE_KEY_V1);
+    }
+  } catch (error) {
+    console.error('Error al migrar desde v1', error);
+  }
+
+  return timestamps;
+}
+
+/**
+ * Update a card count and return new collection + timestamps.
+ */
+export function updateCardCount(
+  prevCollection: CollectionState,
+  prevTimestamps: Record<string, string>,
+  cardId: string,
+  delta: number
+): { collection: CollectionState; timestamps: Record<string, string> } {
+  const current = prevCollection[cardId] || 0;
+  const next = Math.max(0, current + delta);
+  const now = new Date().toISOString();
+
+  return {
+    collection: { ...prevCollection, [cardId]: next },
+    timestamps: { ...prevTimestamps, [cardId]: now },
+  };
 }
 
 // Genera estadísticas consolidadas del álbum
