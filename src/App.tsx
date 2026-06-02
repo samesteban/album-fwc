@@ -9,6 +9,7 @@ import { buildInitialSections, loadCollectionState, saveCollectionState } from '
 import Dashboard from './components/Dashboard';
 import SectionModal from './components/SectionModal';
 import CardGrid from './components/CardGrid';
+import LoginScreen from './components/LoginScreen';
 import { Home, BookOpen, Globe, Info, Sparkles, Sliders } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -92,8 +93,11 @@ export default function App() {
             ÁLBUM MUNDIAL <span className="text-yellow-400">2026</span>
           </span>
         </div>
-        <div className="text-[9px] font-bold text-yellow-400 font-mono tracking-wider bg-emerald-850 px-2.5 py-1 rounded-full border border-emerald-700/80 uppercase">
-          Local Storage Activo
+        <div className="flex items-center gap-2">
+          <LoginScreen />
+          <div className="text-[9px] font-bold text-yellow-400 font-mono tracking-wider bg-emerald-850 px-2.5 py-1 rounded-full border border-emerald-700/80 uppercase">
+            Local Storage
+          </div>
         </div>
       </header>
 

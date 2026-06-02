@@ -30,3 +30,24 @@ export interface CollectionStats {
   repeatedCount: number; // Number of duplicate cards (sum of (count - 1) for count >= 2)
   completionPercentage: number;
 }
+
+// ── Sync / Auth Types ──────────────────────────────────────────
+
+export interface TimestampedCard {
+  cardId: string;
+  count: number;
+  updatedAt: string; // ISO 8601
+}
+
+export type SyncStatus = 'idle' | 'syncing' | 'synced' | 'error' | 'offline';
+
+export interface SyncStats {
+  pushed: number;
+  pulled: number;
+}
+
+export interface StorageV2 {
+  version: 2;
+  collection: CollectionState;
+  timestamps: Record<string, string>; // cardId → ISO timestamp
+}
