@@ -110,59 +110,29 @@ export default function Dashboard({
             <h1 className="text-xl font-black tracking-tight text-white">Álbum <span className="text-yellow-400">2026</span> PWA</h1>
           </div>
         </div>
-        <button
-          id="reset-btn"
-          onClick={() => setShowResetConfirm(true)}
-          className="p-2.5 text-yellow-400 hover:bg-white/10 rounded-xl transition-all duration-200 border border-emerald-800"
-          title="Reiniciar Colección"
-        >
-          <RotateCcw className="w-5 h-5" />
-        </button>
       </div>
 
-      {/* CONFIRMAR REINICIO MODAL OVERLAY */}
-      <AnimatePresence>
-        {showResetConfirm && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4"
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="bg-emerald-900 border-2 border-emerald-700 p-6 rounded-3xl max-w-sm w-full text-center space-y-4 shadow-2xl"
-            >
-              <div className="mx-auto w-12 h-12 bg-red-500/20 text-red-400 rounded-full flex items-center justify-center border border-red-500/30">
-                <RotateCcw className="w-6 h-6" />
-              </div>
-              <h3 className="text-lg font-black text-white">¿Reiniciar tu álbum?</h3>
-              <p className="text-emerald-200 text-xs leading-relaxed">
-                Esta acción eliminará todas las láminas registradas y volverá los contadores a 0. No se puede deshacer.
-              </p>
-              <div className="flex gap-3 justify-center pt-2">
-                <button
-                  onClick={() => setShowResetConfirm(false)}
-                  className="px-4 py-2.5 bg-emerald-850 text-emerald-200 text-xs font-bold rounded-xl hover:bg-emerald-800 transition border border-emerald-800"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={() => {
-                    onResetCollection();
-                    setShowResetConfirm(false);
-                  }}
-                  className="px-4 py-2.5 bg-red-650 hover:bg-red-600 text-white text-xs font-bold rounded-xl transition shadow-md"
-                >
-                  Sí, Reiniciar
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* SYNC STATUS BAR */}
+      {syncStatus && (
+        <div className="flex items-center justify-between bg-emerald-900/40 border border-emerald-800/50 px-4 py-2 rounded-2xl">
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${
+              syncStatus === 'synced' ? 'bg-emerald-400' :
+              syncStatus === 'syncing' ? 'bg-yellow-400 animate-pulse' :
+              syncStatus === 'error' ? 'bg-red-400' :
+              syncStatus === 'offline' ? 'bg-slate-500' :
+              'bg-emerald-700'
+            }`} />
+            <span className="text-[10px] font-bold text-emerald-300 uppercase tracking-wider font-mono">
+              {syncStatus === 'synced' && 'Sincronizado'}
+              {syncStatus === 'syncing' && 'Sincronizando...'}
+              {syncStatus === 'error' && 'Error de sincronización'}
+              {syncStatus === 'offline' && 'Sin conexión'}
+              {syncStatus === 'idle' && 'Local'}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* BUSCADOR REACTIVO DE LÁMINAS */}
       <div id="search-box" className="bg-emerald-900/55 border border-emerald-800/80 p-4 rounded-3xl shadow-lg">
