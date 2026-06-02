@@ -1,0 +1,19 @@
+project: album-fwc
+stack:
+  language: typescript
+  frontend: react
+  bundler: vite
+  styling: tailwindcss-v4
+  animations: motion
+  icons: lucide-react
+testing:
+  capability: none
+  strict_tdd: false
+sdd:
+  artifact_store: openspec
+  execution_mode: interactive
+  chained_pr_strategy: ask-always
+  review_budget_lines: 400
+active_change: null
+archived_changes:
+  - 2026-06-02-cross-device-sync

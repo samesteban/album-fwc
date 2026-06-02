@@ -3,16 +3,30 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Section, CollectionState } from './types';
-import { buildInitialSections, loadCollectionState, saveCollectionState } from './data';
+import {
+  buildInitialSections,
+  loadCollectionState,
+  loadTimestamps,
+  saveCollectionState,
+  updateCardCount,
+  migrateFromV1,
+  hasLegacyData,
+} from './data';
+import { useAuth } from './providers/AuthProvider';
+import { useSync } from './hooks/useSync';
 import Dashboard from './components/Dashboard';
 import SectionModal from './components/SectionModal';
 import CardGrid from './components/CardGrid';
+import LoginScreen from './components/LoginScreen';
 import { Home, BookOpen, Globe, Info, Sparkles, Sliders } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function App() {
+  const { user } = useAuth();
+  const sync = useSync();
+
   // Lista persistente de secciones con su estructura original
   const sections = useMemo(() => buildInitialSections(), []);
 
@@ -21,61 +35,129 @@ export default function App() {
     return loadCollectionState();
   });
 
-  // Pestaña activa actual: 'dashboard' | 'collection'
+  // Estado reactivo para los timestamps por lámina
+  const [timestamps, setTimestamps] = useState<Record<string, string>>(() => {
+    return loadTimestamps();
+  });
+
+  // Pestaña activa actual
   const [activeTab, setActiveTab] = useState<'dashboard' | 'collection'>('dashboard');
 
-  // Sección nacional activa actual (predeterminada MEX, primera en la lista)
+  // Sección activa
   const [activeSectionId, setActiveSectionId] = useState<string>('MEX');
 
-  // Control de apertura del modal de selección
+  // Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Guardado automático en LocalStorage ante cualquier cambio
+  // ── Sync on login ──────────────────────────────────────────
+
+  const [hasRunFirstSync, setHasRunFirstSync] = useState(false);
+
   useEffect(() => {
-    saveCollectionState(collectionState);
-  }, [collectionState]);
+    if (!user || hasRunFirstSync) return;
 
-  // Actualizador para una lámina individual (delta puede ser +1 o -1)
-  const handleUpdateCount = (cardId: string, delta: number) => {
-    setCollectionState(prevState => {
-      const current = prevState[cardId] || 0;
-      const next = Math.max(0, current + delta); // Nunca menor de 0
-      return {
-        ...prevState,
-        [cardId]: next,
-      };
+    // Check if we need to migrate from v1
+    const isFirstSync = hasLegacyData();
+    const localTimestamps = isFirstSync ? migrateFromV1() : timestamps;
+
+    sync.triggerSync(user.id, collectionState, localTimestamps, isFirstSync).then(result => {
+      if (result) {
+        setCollectionState(result.merged);
+        setTimestamps(result.timestamps);
+        saveCollectionState(result.merged, result.timestamps);
+      }
     });
-  };
 
-  // Acciones rápidas para cambiar todo el estado de una sección (ej: todas pegadas, o limpiar todas)
-  const handleSetSectionAllState = (sectionId: string, stateValue: number) => {
-    const targetSection = sections.find(s => s.id === sectionId);
-    if (!targetSection) return;
+    setHasRunFirstSync(true);
+  }, [user, hasRunFirstSync]); // eslint-disable-line react-hooks/exhaustive-deps
 
-    setCollectionState(prevState => {
-      const nextState = { ...prevState };
-      targetSection.cards.forEach(card => {
-        nextState[card.id] = stateValue;
+  // ── Guardado automático en LocalStorage ─────────────────────
+
+  useEffect(() => {
+    saveCollectionState(collectionState, timestamps);
+  }, [collectionState, timestamps]);
+
+  // ── Mutations ──────────────────────────────────────────────
+
+  const handleUpdateCount = useCallback(
+    (cardId: string, delta: number) => {
+      setCollectionState(prevCollection => {
+        setTimestamps(prevTimestamps => {
+          const { collection, timestamps: newTimestamps } = updateCardCount(
+            prevCollection,
+            prevTimestamps,
+            cardId,
+            delta
+          );
+
+          // Trigger debounced sync
+          if (user) {
+            sync.onCardUpdate(user.id, collection, newTimestamps);
+          }
+
+          saveCollectionState(collection, newTimestamps);
+          return newTimestamps;
+        });
+
+        const current = prevCollection[cardId] || 0;
+        const next = Math.max(0, current + delta);
+        return { ...prevCollection, [cardId]: next };
       });
-      return nextState;
-    });
-  };
+    },
+    [user, sync]
+  );
 
-  // Reiniciar por completo la colección a 0
-  const handleResetCollection = () => {
+  // Acciones rápidas para marcar/limpiar sección completa
+  const handleSetSectionAllState = useCallback(
+    (sectionId: string, stateValue: number) => {
+      const targetSection = sections.find(s => s.id === sectionId);
+      if (!targetSection) return;
+
+      setCollectionState(prevCollection => {
+        const nextState = { ...prevCollection };
+        const now = new Date().toISOString();
+
+        setTimestamps(prevTimestamps => {
+          const nextTimestamps = { ...prevTimestamps };
+          targetSection.cards.forEach(card => {
+            nextState[card.id] = stateValue;
+            nextTimestamps[card.id] = now;
+          });
+
+          if (user) {
+            sync.onCardUpdate(user.id, nextState, nextTimestamps);
+          }
+
+          saveCollectionState(nextState, nextTimestamps);
+          return nextTimestamps;
+        });
+
+        return nextState;
+      });
+    },
+    [sections, user, sync]
+  );
+
+  // Reiniciar colección
+  const handleResetCollection = useCallback(() => {
+    const now = new Date().toISOString();
     setCollectionState({});
-  };
+    setTimestamps({});
+    saveCollectionState({}, {});
+  }, []);
 
-  // Obtener el objeto de sección activo
+  // ── Helper ──────────────────────────────────────────────────
+
   const activeSection = useMemo(() => {
     return sections.find(s => s.id === activeSectionId) || sections[0];
   }, [sections, activeSectionId]);
 
-  // Manejar redireccionamiento rápido desde resultados de búsqueda o Top 10
   const handleJumpToSection = (sectionId: string) => {
     setActiveSectionId(sectionId);
     setActiveTab('collection');
   };
+
+  const syncStatus = sync.status;
 
   return (
     <div className="bg-emerald-950 min-h-screen text-slate-100 flex flex-col font-sans select-none pb-24 antialiased">
@@ -92,12 +174,34 @@ export default function App() {
             ÁLBUM MUNDIAL <span className="text-yellow-400">2026</span>
           </span>
         </div>
-        <div className="text-[9px] font-bold text-yellow-400 font-mono tracking-wider bg-emerald-850 px-2.5 py-1 rounded-full border border-emerald-700/80 uppercase">
-          Local Storage Activo
+        <div className="flex items-center gap-2">
+          <LoginScreen />
+          {user && (
+            <div className={`text-[9px] font-bold font-mono tracking-wider px-2.5 py-1 rounded-full uppercase border transition-all ${
+              syncStatus === 'synced'
+                ? 'text-emerald-300 bg-emerald-850 border-emerald-700/80'
+                : syncStatus === 'syncing'
+                ? 'text-yellow-400 bg-yellow-400/10 border-yellow-400/40 animate-pulse'
+                : syncStatus === 'error' || syncStatus === 'offline'
+                ? 'text-red-400 bg-red-400/10 border-red-400/40'
+                : 'text-emerald-400 bg-emerald-850 border-emerald-700/80'
+            }`}>
+              {syncStatus === 'synced' && 'Sync OK'}
+              {syncStatus === 'syncing' && 'Sync...'}
+              {syncStatus === 'error' && 'Error'}
+              {syncStatus === 'offline' && 'Offline'}
+              {syncStatus === 'idle' && 'Local'}
+            </div>
+          )}
+          {!user && (
+            <div className="text-[9px] font-bold text-emerald-400 font-mono tracking-wider bg-emerald-850 px-2.5 py-1 rounded-full border border-emerald-700/80 uppercase">
+              Local
+            </div>
+          )}
         </div>
       </header>
 
-      {/* MAIN CONTAINER (LIMITADO PARA VISTA MOBILE VERTICAL) */}
+      {/* MAIN CONTAINER */}
       <main className="flex-1 w-full max-w-sm mx-auto px-4 pt-4 z-10">
         <AnimatePresence mode="wait">
           {activeTab === 'dashboard' ? (
@@ -114,6 +218,7 @@ export default function App() {
                 onUpdateCount={handleUpdateCount}
                 onSelectSection={handleJumpToSection}
                 onResetCollection={handleResetCollection}
+                syncStatus={syncStatus}
               />
             </motion.div>
           ) : (
@@ -125,7 +230,6 @@ export default function App() {
               transition={{ duration: 0.15 }}
               className="space-y-4"
             >
-              {/* CardGrid Grid de láminas */}
               <CardGrid
                 section={activeSection}
                 collectionState={collectionState}
@@ -137,7 +241,7 @@ export default function App() {
         </AnimatePresence>
       </main>
 
-      {/* BOTÓN FLOTANTE PARA CAMBIAR PAÍS (visible cuando estás en la pestaña de colección) */}
+      {/* FLOATING BUTTON */}
       <AnimatePresence>
         {activeTab === 'collection' && (
           <motion.button
@@ -155,10 +259,9 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* FOOTER BAR STICKY (Navegación tipo App de celular) */}
+      {/* FOOTER BAR */}
       <nav className="fixed bottom-0 inset-x-0 bg-emerald-900/95 backdrop-blur-md border-t border-emerald-800/80 z-40 pb-safe shadow-xl">
         <div className="max-w-sm mx-auto h-16 px-6 flex items-center justify-between">
-          {/* TAB 1: RESUMEN */}
           <button
             onClick={() => setActiveTab('dashboard')}
             className={`flex flex-col items-center justify-center flex-1 h-full py-1 text-center transition ${
@@ -169,7 +272,6 @@ export default function App() {
             <span className="text-[10px] font-bold mt-1 font-sans">Resumen</span>
           </button>
 
-          {/* TAB 3: MIS LÁMINAS */}
           <button
             onClick={() => setActiveTab('collection')}
             className={`flex flex-col items-center justify-center flex-1 h-full py-1 text-center transition tracking-tight ${
@@ -182,7 +284,7 @@ export default function App() {
         </div>
       </nav>
 
-      {/* MODAL GLOBAL PARA SELECCIONAR SECCIÓN */}
+      {/* SECTION MODAL */}
       <SectionModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
