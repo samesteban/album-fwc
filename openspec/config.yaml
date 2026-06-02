@@ -15,3 +15,5 @@ sdd:
   chained_pr_strategy: ask-always
   review_budget_lines: 400
 active_change: null
+archived_changes:
+  - 2026-06-02-cross-device-sync
