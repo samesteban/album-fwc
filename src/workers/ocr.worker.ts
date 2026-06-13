@@ -34,10 +34,17 @@ const MAX_FRAME_DIMENSION = 640;
  */
 async function initWorker(): Promise<void> {
   try {
-    tesseractWorker = await createWorker('eng', 1, undefined, {
+    tesseractWorker = await createWorker('eng');
+
+    // Apply parameters after creation — passing config to createWorker
+    // only accepts InitOptions (dawg loading), not runtime params.
+    await tesseractWorker.setParameters({
       // Treat the image as a single uniform block of text — avoids
       // costly page-layout analysis that's useless for sticker codes.
       tessedit_pageseg_mode: '6',
+      // Restrict character set to uppercase letters, digits, and space
+      // to prevent number/letter confusion (e.g. 5→S, 0→O, 1→I).
+      tessedit_char_whitelist: ' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
     });
 
     self.postMessage({ type: 'ready' } satisfies OcrResponse);
