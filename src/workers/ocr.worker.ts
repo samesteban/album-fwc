@@ -24,9 +24,56 @@ import { parseOcrCode } from '../lib/scanner-regex';
 
 let tesseractWorker: Worker | null = null;
 
-// Downscale camera frames to this max dimension to speed up OCR
-// and make text relatively larger in the processed image.
+// Downscale camera frames to this max dimension before Otsu thresholding.
+// Smaller images process faster; the text-to-frame ratio stays good since
+// we already crop to center 75% before sending.
 const MAX_FRAME_DIMENSION = 640;
+
+/**
+ * Compute Otsu's threshold for a grayscale 8-bit image buffer.
+ * Finds the intensity value that best separates foreground from background.
+ * Returns a threshold value 0–255.
+ */
+function otsuThreshold(pixels: Uint8ClampedArray): number {
+  const length = pixels.length;
+  const totalPixels = length >> 2; // length / 4 (RGBA)
+  const hist = new Uint32Array(256);
+
+  // Build histogram from grayscale values (R=G=B after grayscale conversion)
+  for (let i = 0; i < length; i += 4) {
+    hist[pixels[i]]++;
+  }
+
+  let sum = 0;
+  for (let i = 0; i < 256; i++) {
+    sum += i * hist[i];
+  }
+
+  let sumB = 0;
+  let wB = 0;
+  let maxVariance = 0;
+  let threshold = 0;
+
+  for (let i = 0; i < 256; i++) {
+    wB += hist[i];
+    if (wB === 0) continue;
+
+    const wF = totalPixels - wB;
+    if (wF === 0) break;
+
+    sumB += i * hist[i];
+    const meanB = sumB / wB;
+    const meanF = (sum - sumB) / wF;
+    const variance = wB * wF * (meanB - meanF) * (meanB - meanF);
+
+    if (variance > maxVariance) {
+      maxVariance = variance;
+      threshold = i;
+    }
+  }
+
+  return threshold;
+}
 
 /**
  * Initialize the Tesseract worker with English language data
@@ -36,13 +83,10 @@ async function initWorker(): Promise<void> {
   try {
     tesseractWorker = await createWorker('eng');
 
-    // Apply parameters after creation — passing config to createWorker
-    // only accepts InitOptions (dawg loading), not runtime params.
     await tesseractWorker.setParameters({
-      // Treat the image as a single line of text — ideal for sticker codes
-      // like "MEX 16" or "RSA 1". Skips page/block segmentation since
-      // there's only one line of relevant text in the cropped frame.
-      tessedit_pageseg_mode: '7',
+      // RAW_LINE: treat the image as a single raw text line, no layout
+      // analysis at all. Ideal for pre-cropped sticker code zones.
+      tessedit_pageseg_mode: '13',
       // Restrict character set to uppercase letters, digits, and space
       // to prevent number/letter confusion (e.g. 5→S, 0→O, 1→I).
       tessedit_char_whitelist: ' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
@@ -58,15 +102,18 @@ async function initWorker(): Promise<void> {
 }
 
 /**
- * Convert transferred ImageData to a downscaled PNG Blob.
+ * Downscale a camera frame then apply Otsu binarization.
  *
- * Two-pass approach:
- *   1. Draw raw pixels onto an OffscreenCanvas at original resolution.
- *   2. Downscale via drawImage (with bilinear interpolation) onto a
- *      smaller canvas, then export as PNG.
+ * Pipeline:
+ *   1. Draw raw pixels onto a source OffscreenCanvas.
+ *   2. Downscale onto a smaller canvas (bilinear interpolation).
+ *   3. Read back pixels → weighted grayscale → Otsu threshold →
+ *      put pure black/white pixels back.
+ *   4. Export as PNG for Tesseract.
  *
- * Downscaling makes text relatively larger, reduces noise, and
- * dramatically speeds up Tesseract processing on mobile.
+ * Binarization eliminates colour noise and soft edges, leaving only
+ * crisp text shapes. Otsu adapts the threshold automatically, handling
+ * white-on-black AND black-on-white stickers without hardcoded values.
  */
 async function imageDataToBlob(imageData: ImageData): Promise<Blob> {
   let srcW = imageData.width;
@@ -89,19 +136,38 @@ async function imageDataToBlob(imageData: ImageData): Promise<Blob> {
     dstH = Math.round(srcH * scale);
   }
 
-  // Pass 2: downscale onto the destination canvas with preprocessing.
-  // The filter stack converts to grayscale, boosts contrast, and
-  // slightly brightens — making text stand out from the background
-  // for more reliable character recognition.
+  // Pass 2: downscale (plain drawImage, no filter)
   const dstCanvas = new OffscreenCanvas(dstW, dstH);
   const dstCtx = dstCanvas.getContext('2d');
   if (!dstCtx) {
     throw new Error('Failed to get destination OffscreenCanvas 2D context');
   }
-  dstCtx.filter = 'grayscale(1) contrast(1.6) brightness(1.05)';
   dstCtx.drawImage(srcCanvas, 0, 0, srcW, srcH, 0, 0, dstW, dstH);
-  dstCtx.filter = 'none';
 
+  // Pass 3: Otsu binarization
+  const frame = dstCtx.getImageData(0, 0, dstW, dstH);
+  const d = frame.data;
+
+  // Convert to grayscale in-place (weighted luminance)
+  for (let i = 0; i < d.length; i += 4) {
+    const gray = Math.round(0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]);
+    d[i] = gray;
+    d[i + 1] = gray;
+    d[i + 2] = gray;
+  }
+
+  // Compute optimal threshold via Otsu
+  const threshold = otsuThreshold(d);
+
+  // Apply threshold — pure black (0) or pure white (255)
+  for (let i = 0; i < d.length; i += 4) {
+    const val = d[i] >= threshold ? 255 : 0;
+    d[i] = val;
+    d[i + 1] = val;
+    d[i + 2] = val;
+  }
+
+  dstCtx.putImageData(frame, 0, 0);
   return dstCanvas.convertToBlob({ type: 'image/png' });
 }
 
