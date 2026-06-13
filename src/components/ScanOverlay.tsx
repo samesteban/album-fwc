@@ -131,7 +131,7 @@ function StatusBadge({ result }: { result: ScanResult }) {
 
   return (
     <span className="inline-block text-xs font-black uppercase tracking-wider font-mono bg-yellow-400/10 border border-yellow-400/20 text-yellow-400 px-3 py-1 rounded-full">
-      {count} Repetida{count > 1 ? 's' : ''}
+      {count - 1} Repetida{(count - 1) > 1 ? 's' : ''}
     </span>
   );
 }

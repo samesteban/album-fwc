@@ -379,7 +379,7 @@ export default function Dashboard({
                         {item.sectionId} {item.num}
                       </span>
                       <span className="text-[9px] text-white font-extrabold bg-red-500 px-2.5 py-0.5 rounded-md shadow-sm uppercase tracking-wider shrink-0 select-none">
-                        x{item.repeatedAmount + 1}
+                        x{item.repeatedAmount}
                       </span>
                     </div>
                     {item.playerName && (
