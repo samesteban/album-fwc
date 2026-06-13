@@ -13,6 +13,7 @@ interface UseOcrWorkerReturn {
   error: string | null;
   scan: (imageData: ImageData) => void;
   lastResult: OcrResultResponse | null;
+  clearLastResult: () => void;
 }
 
 export function useOcrWorker(): UseOcrWorkerReturn {
@@ -65,5 +66,9 @@ export function useOcrWorker(): UseOcrWorkerReturn {
     workerRef.current.postMessage({ type: 'scan', imageData }, [imageData.data.buffer]);
   }, []);
 
-  return { isReady, error, scan, lastResult };
+  const clearLastResult = useCallback(() => {
+    setLastResult(null);
+  }, []);
+
+  return { isReady, error, scan, lastResult, clearLastResult };
 }

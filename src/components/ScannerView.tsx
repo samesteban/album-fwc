@@ -21,7 +21,7 @@ interface ScannerViewProps {
 }
 
 export default function ScannerView({ onCardUpdate }: ScannerViewProps) {
-  const { isReady: workerReady, error: workerError, scan: sendFrame, lastResult } = useOcrWorker();
+  const { isReady: workerReady, error: workerError, scan: sendFrame, lastResult, clearLastResult } = useOcrWorker();
   const [viewfinderState, setViewfinderState] = useState<ViewfinderState>('loading');
   const [scanResult, setScanResult] = useState<ScanResult | null>(null);
   const [showOverlay, setShowOverlay] = useState(false);
@@ -144,9 +144,10 @@ export default function ScannerView({ onCardUpdate }: ScannerViewProps) {
   const handleSiguiente = useCallback(() => {
     setShowOverlay(false);
     setScanResult(null);
+    clearLastResult();
     setViewfinderState('scanning');
     scanner.resume();
-  }, [scanner]);
+  }, [scanner, clearLastResult]);
 
   // ── Render ─────────────────────────────────────────────────
 
