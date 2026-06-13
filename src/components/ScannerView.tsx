@@ -32,11 +32,11 @@ export default function ScannerView({ onCardUpdate }: ScannerViewProps) {
   // ── Callback: each captured frame is sent to the OCR worker ──
 
   const handleFrame = useCallback(
-    (imageBlob: Blob) => {
+    (imageData: ImageData) => {
       // Don't send if we're already waiting for a result or if frozen
       if (pendingScanRef.current) return;
       pendingScanRef.current = true;
-      sendFrame(imageBlob);
+      sendFrame(imageData);
     },
     [sendFrame]
   );

@@ -24,7 +24,7 @@ interface UseScannerReturn {
 const CAPTURE_INTERVAL_MS = 500;
 
 export function useScanner(
-  onFrame: (blob: Blob) => void
+  onFrame: (imageData: ImageData) => void
 ): UseScannerReturn {
   const [status, setStatus] = useState<ScannerStatus>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +38,7 @@ export function useScanner(
 
   // ── Canvas helpers ──────────────────────────────────────────
 
-  const captureFrameAsBlob = useCallback(async (): Promise<Blob | null> => {
+  const captureFrame = useCallback((): ImageData | null => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas) return null;
@@ -50,9 +50,7 @@ export function useScanner(
     canvas.height = video.videoHeight;
 
     ctx.drawImage(video, 0, 0);
-    return new Promise<Blob | null>((resolve) =>
-      canvas.toBlob(resolve, 'image/png')
-    );
+    return ctx.getImageData(0, 0, canvas.width, canvas.height);
   }, []);
 
   // ── Frame loop ──────────────────────────────────────────────
@@ -63,14 +61,15 @@ export function useScanner(
 
       if (timestamp - lastCaptureRef.current >= CAPTURE_INTERVAL_MS) {
         lastCaptureRef.current = timestamp;
-        captureFrameAsBlob().then((blob) => {
-          if (blob) onFrame(blob);
-        });
+        const frame = captureFrame();
+        if (frame) {
+          onFrame(frame);
+        }
       }
 
       animFrameRef.current = requestAnimationFrame(frameLoop);
     },
-    [captureFrameAsBlob, onFrame]
+    [captureFrame, onFrame]
   );
 
   // ── Camera control ──────────────────────────────────────────

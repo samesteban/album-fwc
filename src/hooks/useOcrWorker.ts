@@ -11,7 +11,7 @@ import type { OcrResponse, OcrResultResponse } from '../types';
 interface UseOcrWorkerReturn {
   isReady: boolean;
   error: string | null;
-  scan: (imageBlob: Blob) => void;
+  scan: (imageData: ImageData) => void;
   lastResult: OcrResultResponse | null;
 }
 
@@ -60,9 +60,9 @@ export function useOcrWorker(): UseOcrWorkerReturn {
     };
   }, []);
 
-  const scan = useCallback((imageBlob: Blob) => {
+  const scan = useCallback((imageData: ImageData) => {
     if (!workerRef.current) return;
-    workerRef.current.postMessage({ type: 'scan', imageBlob });
+    workerRef.current.postMessage({ type: 'scan', imageData }, [imageData.data.buffer]);
   }, []);
 
   return { isReady, error, scan, lastResult };

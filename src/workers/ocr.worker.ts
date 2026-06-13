@@ -5,8 +5,14 @@
  * OCR Web Worker — runs Tesseract.js in a dedicated thread.
  * Communicates with the main thread via postMessage.
  *
+ * Data flow:
+ *   Main thread captures ImageData synchronously (getImageData),
+ *   transfers pixel buffer zero-copy to this worker.
+ *   Worker draws ImageData onto an OffscreenCanvas, encodes as PNG,
+ *   then passes the PNG Blob to Tesseract.js for recognition.
+ *
  * Contract:
- *   Main → Worker: OcrRequest { type: 'scan', imageBlob: Blob }
+ *   Main → Worker: OcrRequest { type: 'scan', imageData: ImageData }
  *                 | { type: 'close' }
  *   Worker → Main: OcrResponse { type: 'ready' | 'result' | 'error' }
  */
@@ -34,9 +40,24 @@ async function initWorker(): Promise<void> {
 }
 
 /**
- * Process a single frame: OCR + regex extraction.
+ * Convert transferred ImageData to a PNG Blob via OffscreenCanvas.
+ * Tesseract.js receives a proper image format instead of raw pixel data,
+ * avoiding leptonica "Unknown format" errors.
  */
-async function processFrame(imageBlob: Blob): Promise<void> {
+function imageDataToBlob(imageData: ImageData): Promise<Blob> {
+  const canvas = new OffscreenCanvas(imageData.width, imageData.height);
+  const ctx = canvas.getContext('2d');
+  if (!ctx) {
+    return Promise.reject(new Error('Failed to get OffscreenCanvas 2D context'));
+  }
+  ctx.putImageData(imageData, 0, 0);
+  return canvas.convertToBlob({ type: 'image/png' });
+}
+
+/**
+ * Process a single frame: convert to PNG → OCR → regex extraction.
+ */
+async function processFrame(imageData: ImageData): Promise<void> {
   if (!tesseractWorker) {
     self.postMessage({
       type: 'error',
@@ -46,7 +67,9 @@ async function processFrame(imageBlob: Blob): Promise<void> {
   }
 
   try {
-    const { data } = await tesseractWorker.recognize(imageBlob);
+    // Convert transferred pixel data to a proper PNG blob
+    const blob = await imageDataToBlob(imageData);
+    const { data } = await tesseractWorker.recognize(blob);
     const raw = data.text.trim();
 
     if (!raw) {
@@ -92,7 +115,7 @@ self.onmessage = async (event: MessageEvent<OcrRequest>) => {
   }
 
   // type === 'scan'
-  await processFrame(msg.imageBlob);
+  await processFrame(msg.imageData);
 };
 
 // ── Boot ───────────────────────────────────────────────────────
