@@ -51,3 +51,40 @@ export interface StorageV2 {
   collection: CollectionState;
   timestamps: Record<string, string>; // cardId → ISO timestamp
 }
+
+// ── Card Scanner Types ──────────────────────────────────────────
+
+export type ScannerStatus = 'idle' | 'loading' | 'scanning' | 'frozen' | 'error';
+
+export interface ScanResult {
+  raw: string;              // Full OCR output
+  code: string;             // e.g. "ESP 5"
+  sectionCode: string;      // e.g. "ESP"
+  number: string;           // e.g. "5"
+  cardId: string;           // e.g. "ESP_5"
+  count: number;            // Current localStorage count
+  status: 'missing' | 'pasted' | 'repeated';
+}
+
+export type OcrRequest =
+  | { type: 'scan'; imageData: ImageData }
+  | { type: 'close' };
+
+export interface OcrReadyResponse {
+  type: 'ready';
+}
+
+export interface OcrResultResponse {
+  type: 'result';
+  raw: string | null;
+  match: string | null;
+  sectionCode: string | null;
+  number: string | null;
+}
+
+export interface OcrErrorResponse {
+  type: 'error';
+  message: string;
+}
+
+export type OcrResponse = OcrReadyResponse | OcrResultResponse | OcrErrorResponse;

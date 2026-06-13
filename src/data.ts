@@ -321,3 +321,22 @@ export function getTopRepeatedCards(sections: Section[], currentState: Collectio
     .sort((a, b) => b.repeatedAmount - a.repeatedAmount)
     .slice(0, limit);
 }
+
+/**
+ * Parse a scanned sticker code (e.g. "ESP 5") into the app's card ID format ("ESP_5").
+ * Validates the section exists in the album metadata.
+ * Returns null if the section code is unknown.
+ */
+export function parseScannedCode(code: string): { cardId: string; sectionId: string; num: string } | null {
+  const trimmed = code.trim().toUpperCase();
+  const match = trimmed.match(/^([A-Z]{2,3}) (\d{1,2})$/);
+  if (!match) return null;
+
+  const sectionId = match[1];
+  const num = match[2];
+
+  const section = SECTIONS_METADATA.find(s => s.id === sectionId);
+  if (!section) return null;
+
+  return { cardId: `${sectionId}_${num}`, sectionId, num };
+}
