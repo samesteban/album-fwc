@@ -13,7 +13,8 @@ sdd:
   artifact_store: openspec
   execution_mode: interactive
   chained_pr_strategy: ask-always
+  chain_strategy: feature-branch-chain
   review_budget_lines: 400
-active_change: null
+active_change: card-scanner
 archived_changes:
   - 2026-06-02-cross-device-sync
