@@ -49,8 +49,18 @@ export function useScanner(
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
+    // Draw the full video frame
     ctx.drawImage(video, 0, 0);
-    return ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+    // Crop to center 75% — matches the Viewfinder clear window area.
+    // This excludes background text (shirts, posters, etc.) so Tesseract
+    // only needs to OCR the sticker code zone.
+    const cropWidth = Math.round(canvas.width * 0.75);
+    const cropHeight = Math.round(canvas.height * 0.75);
+    const cropX = Math.round((canvas.width - cropWidth) / 2);
+    const cropY = Math.round((canvas.height - cropHeight) / 2);
+
+    return ctx.getImageData(cropX, cropY, cropWidth, cropHeight);
   }, []);
 
   // ── Frame loop ──────────────────────────────────────────────
