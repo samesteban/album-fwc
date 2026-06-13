@@ -24,12 +24,22 @@ import { parseOcrCode } from '../lib/scanner-regex';
 
 let tesseractWorker: Worker | null = null;
 
+// Downscale camera frames to this max dimension to speed up OCR
+// and make text relatively larger in the processed image.
+const MAX_FRAME_DIMENSION = 640;
+
 /**
- * Initialize the Tesseract worker with English language data.
+ * Initialize the Tesseract worker with English language data
+ * and parameters optimized for short code recognition.
  */
 async function initWorker(): Promise<void> {
   try {
-    tesseractWorker = await createWorker('eng');
+    tesseractWorker = await createWorker('eng', 1, undefined, {
+      // Treat the image as a single uniform block of text — avoids
+      // costly page-layout analysis that's useless for sticker codes.
+      tessedit_pageseg_mode: '6',
+    });
+
     self.postMessage({ type: 'ready' } satisfies OcrResponse);
   } catch (err) {
     self.postMessage({
@@ -40,18 +50,46 @@ async function initWorker(): Promise<void> {
 }
 
 /**
- * Convert transferred ImageData to a PNG Blob via OffscreenCanvas.
- * Tesseract.js receives a proper image format instead of raw pixel data,
- * avoiding leptonica "Unknown format" errors.
+ * Convert transferred ImageData to a downscaled PNG Blob.
+ *
+ * Two-pass approach:
+ *   1. Draw raw pixels onto an OffscreenCanvas at original resolution.
+ *   2. Downscale via drawImage (with bilinear interpolation) onto a
+ *      smaller canvas, then export as PNG.
+ *
+ * Downscaling makes text relatively larger, reduces noise, and
+ * dramatically speeds up Tesseract processing on mobile.
  */
-function imageDataToBlob(imageData: ImageData): Promise<Blob> {
-  const canvas = new OffscreenCanvas(imageData.width, imageData.height);
-  const ctx = canvas.getContext('2d');
-  if (!ctx) {
-    return Promise.reject(new Error('Failed to get OffscreenCanvas 2D context'));
+async function imageDataToBlob(imageData: ImageData): Promise<Blob> {
+  let srcW = imageData.width;
+  let srcH = imageData.height;
+
+  // Pass 1: put raw pixels on a source canvas
+  const srcCanvas = new OffscreenCanvas(srcW, srcH);
+  const srcCtx = srcCanvas.getContext('2d');
+  if (!srcCtx) {
+    throw new Error('Failed to get OffscreenCanvas 2D context');
   }
-  ctx.putImageData(imageData, 0, 0);
-  return canvas.convertToBlob({ type: 'image/png' });
+  srcCtx.putImageData(imageData, 0, 0);
+
+  // Calculate downscale dimensions
+  let dstW = srcW;
+  let dstH = srcH;
+  if (srcW > MAX_FRAME_DIMENSION || srcH > MAX_FRAME_DIMENSION) {
+    const scale = Math.min(MAX_FRAME_DIMENSION / srcW, MAX_FRAME_DIMENSION / srcH);
+    dstW = Math.round(srcW * scale);
+    dstH = Math.round(srcH * scale);
+  }
+
+  // Pass 2: downscale onto the destination canvas
+  const dstCanvas = new OffscreenCanvas(dstW, dstH);
+  const dstCtx = dstCanvas.getContext('2d');
+  if (!dstCtx) {
+    throw new Error('Failed to get destination OffscreenCanvas 2D context');
+  }
+  dstCtx.drawImage(srcCanvas, 0, 0, srcW, srcH, 0, 0, dstW, dstH);
+
+  return dstCanvas.convertToBlob({ type: 'image/png' });
 }
 
 /**

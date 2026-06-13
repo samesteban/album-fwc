@@ -6,9 +6,10 @@
 /**
  * Regex pattern for valid sticker codes.
  * Matches: 2-3 uppercase letters, space, 1-2 digit number.
+ * Uses loose anchoring so the pattern can appear anywhere in the OCR output.
  * Examples: "ESP 5", "ARG 12", "FWC 00"
  */
-export const CODE_PATTERN = /^([A-Z]{2,3}) (\d{1,2})$/;
+export const CODE_PATTERN = /([A-Z]{2,3}) (\d{1,2})/;
 
 /**
  * All valid section identifiers in the album.
