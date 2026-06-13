@@ -117,6 +117,8 @@ async function processFrame(imageData: ImageData): Promise<void> {
     const { data } = await tesseractWorker.recognize(blob);
     const raw = data.text.trim();
 
+    console.log('[OCR] raw:', JSON.stringify(raw), `confidence:${data.confidence}`);
+
     if (!raw) {
       self.postMessage({
         type: 'result',
@@ -129,6 +131,7 @@ async function processFrame(imageData: ImageData): Promise<void> {
     }
 
     const parsed = parseOcrCode(raw);
+    console.log('[OCR] parsed:', parsed);
 
     self.postMessage({
       type: 'result',

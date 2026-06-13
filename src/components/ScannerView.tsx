@@ -71,6 +71,8 @@ export default function ScannerView({ onCardUpdate }: ScannerViewProps) {
     if (!lastResult) return;
     pendingScanRef.current = false;
 
+    console.log('[Scanner] result received:', lastResult);
+
     // Only process while actively scanning
     if (scanner.status !== 'scanning') return;
 
