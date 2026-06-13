@@ -15,6 +15,6 @@ sdd:
   chained_pr_strategy: ask-always
   chain_strategy: feature-branch-chain
   review_budget_lines: 400
-active_change: card-scanner
+active_change: null
 archived_changes:
   - 2026-06-02-cross-device-sync

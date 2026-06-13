@@ -17,14 +17,14 @@ interface UseScannerReturn {
   error: string | null;
   start: () => Promise<void>;
   stop: () => void;
-  freeze: () => ImageData | null;
+  freeze: () => void;
   resume: () => void;
 }
 
 const CAPTURE_INTERVAL_MS = 500;
 
 export function useScanner(
-  onFrame: (imageData: ImageData) => void
+  onFrame: (blob: Blob) => void
 ): UseScannerReturn {
   const [status, setStatus] = useState<ScannerStatus>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -38,20 +38,21 @@ export function useScanner(
 
   // ── Canvas helpers ──────────────────────────────────────────
 
-  const captureFrame = useCallback((): ImageData | null => {
+  const captureFrameAsBlob = useCallback(async (): Promise<Blob | null> => {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas) return null;
 
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     if (!ctx) return null;
 
-    // Match canvas to video dimensions
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
 
     ctx.drawImage(video, 0, 0);
-    return ctx.getImageData(0, 0, canvas.width, canvas.height);
+    return new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, 'image/png')
+    );
   }, []);
 
   // ── Frame loop ──────────────────────────────────────────────
@@ -62,15 +63,14 @@ export function useScanner(
 
       if (timestamp - lastCaptureRef.current >= CAPTURE_INTERVAL_MS) {
         lastCaptureRef.current = timestamp;
-        const frame = captureFrame();
-        if (frame) {
-          onFrame(frame);
-        }
+        captureFrameAsBlob().then((blob) => {
+          if (blob) onFrame(blob);
+        });
       }
 
       animFrameRef.current = requestAnimationFrame(frameLoop);
     },
-    [captureFrame, onFrame]
+    [captureFrameAsBlob, onFrame]
   );
 
   // ── Camera control ──────────────────────────────────────────
@@ -140,7 +140,7 @@ export function useScanner(
     setStatus('idle');
   }, []);
 
-  const freeze = useCallback((): ImageData | null => {
+  const freeze = useCallback(() => {
     isActiveRef.current = false;
 
     if (animFrameRef.current) {
@@ -149,10 +149,7 @@ export function useScanner(
     }
 
     setStatus('frozen');
-
-    // Capture one last frame for the frozen display
-    return captureFrame();
-  }, [captureFrame]);
+  }, []);
 
   const resume = useCallback(() => {
     if (!streamRef.current) {

@@ -67,7 +67,7 @@ export interface ScanResult {
 }
 
 export type OcrRequest =
-  | { type: 'scan'; imageData: ImageData }
+  | { type: 'scan'; imageBlob: Blob }
   | { type: 'close' };
 
 export interface OcrReadyResponse {

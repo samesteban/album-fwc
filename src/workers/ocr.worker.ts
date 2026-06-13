@@ -6,7 +6,7 @@
  * Communicates with the main thread via postMessage.
  *
  * Contract:
- *   Main → Worker: OcrRequest { type: 'scan', imageData: ImageData }
+ *   Main → Worker: OcrRequest { type: 'scan', imageBlob: Blob }
  *                 | { type: 'close' }
  *   Worker → Main: OcrResponse { type: 'ready' | 'result' | 'error' }
  */
@@ -36,7 +36,7 @@ async function initWorker(): Promise<void> {
 /**
  * Process a single frame: OCR + regex extraction.
  */
-async function processFrame(imageData: ImageData): Promise<void> {
+async function processFrame(imageBlob: Blob): Promise<void> {
   if (!tesseractWorker) {
     self.postMessage({
       type: 'error',
@@ -46,7 +46,7 @@ async function processFrame(imageData: ImageData): Promise<void> {
   }
 
   try {
-    const { data } = await tesseractWorker.recognize(imageData);
+    const { data } = await tesseractWorker.recognize(imageBlob);
     const raw = data.text.trim();
 
     if (!raw) {
@@ -92,7 +92,7 @@ self.onmessage = async (event: MessageEvent<OcrRequest>) => {
   }
 
   // type === 'scan'
-  await processFrame(msg.imageData);
+  await processFrame(msg.imageBlob);
 };
 
 // ── Boot ───────────────────────────────────────────────────────
