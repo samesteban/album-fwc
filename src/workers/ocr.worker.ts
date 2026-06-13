@@ -39,9 +39,10 @@ async function initWorker(): Promise<void> {
     // Apply parameters after creation — passing config to createWorker
     // only accepts InitOptions (dawg loading), not runtime params.
     await tesseractWorker.setParameters({
-      // Treat the image as a single uniform block of text — avoids
-      // costly page-layout analysis that's useless for sticker codes.
-      tessedit_pageseg_mode: '6',
+      // Treat the image as a single line of text — ideal for sticker codes
+      // like "MEX 16" or "RSA 1". Skips page/block segmentation since
+      // there's only one line of relevant text in the cropped frame.
+      tessedit_pageseg_mode: '7',
       // Restrict character set to uppercase letters, digits, and space
       // to prevent number/letter confusion (e.g. 5→S, 0→O, 1→I).
       tessedit_char_whitelist: ' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
@@ -88,13 +89,18 @@ async function imageDataToBlob(imageData: ImageData): Promise<Blob> {
     dstH = Math.round(srcH * scale);
   }
 
-  // Pass 2: downscale onto the destination canvas
+  // Pass 2: downscale onto the destination canvas with preprocessing.
+  // The filter stack converts to grayscale, boosts contrast, and
+  // slightly brightens — making text stand out from the background
+  // for more reliable character recognition.
   const dstCanvas = new OffscreenCanvas(dstW, dstH);
   const dstCtx = dstCanvas.getContext('2d');
   if (!dstCtx) {
     throw new Error('Failed to get destination OffscreenCanvas 2D context');
   }
+  dstCtx.filter = 'grayscale(1) contrast(1.6) brightness(1.05)';
   dstCtx.drawImage(srcCanvas, 0, 0, srcW, srcH, 0, 0, dstW, dstH);
+  dstCtx.filter = 'none';
 
   return dstCanvas.convertToBlob({ type: 'image/png' });
 }
