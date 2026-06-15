@@ -16,7 +16,6 @@ interface DashboardProps {
   onUpdateCount: (cardId: string, delta: number) => void;
   onSelectSection: (sectionId: string) => void;
   onResetCollection: () => void;
-  syncStatus?: string;
   /** Present = authenticated, undefined = not logged in */
   userDisplayName?: string | null;
 }
@@ -27,7 +26,6 @@ export default function Dashboard({
   onUpdateCount,
   onSelectSection,
   onResetCollection,
-  syncStatus,
   userDisplayName,
 }: DashboardProps) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -114,28 +112,6 @@ export default function Dashboard({
           </div>
         </div>
       </div>
-
-      {/* SYNC STATUS BAR */}
-      {syncStatus && (
-        <div className="flex items-center justify-between bg-emerald-900/40 border border-emerald-800/50 px-4 py-2 rounded-2xl">
-          <div className="flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${
-              syncStatus === 'synced' ? 'bg-emerald-400' :
-              syncStatus === 'syncing' ? 'bg-yellow-400 animate-pulse' :
-              syncStatus === 'error' ? 'bg-red-400' :
-              syncStatus === 'offline' ? 'bg-slate-500' :
-              'bg-emerald-700'
-            }`} />
-            <span className="text-[10px] font-bold text-emerald-300 uppercase tracking-wider font-mono">
-              {syncStatus === 'synced' && 'Sincronizado'}
-              {syncStatus === 'syncing' && 'Sincronizando...'}
-              {syncStatus === 'error' && 'Error de sincronización'}
-              {syncStatus === 'offline' && 'Sin conexión'}
-              {syncStatus === 'idle' && 'Local'}
-            </span>
-          </div>
-        </div>
-      )}
 
       {/* BUSCADOR REACTIVO DE LÁMINAS */}
       <div id="search-box" className="bg-emerald-900/55 border border-emerald-800/80 p-4 rounded-3xl shadow-lg">

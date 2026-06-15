@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Section, CollectionState } from './types';
 import {
   buildInitialSections,
@@ -196,6 +196,23 @@ export default function App() {
 
   const syncStatus = sync.status;
 
+  // ── Toast de sync al cargar la página ───────────────────────
+  const [syncToast, setSyncToast] = useState<string | null>(null);
+  const hasShownSyncToast = useRef(false);
+
+  useEffect(() => {
+    if (hasShownSyncToast.current) return;
+    if (syncStatus === 'synced') {
+      hasShownSyncToast.current = true;
+      setSyncToast('Sincronizado');
+      setTimeout(() => setSyncToast(null), 3000);
+    } else if (syncStatus === 'error' || syncStatus === 'offline') {
+      hasShownSyncToast.current = true;
+      setSyncToast('Sin conexión');
+      setTimeout(() => setSyncToast(null), 4000);
+    }
+  }, [syncStatus]);
+
   // ── SPA route rendering ─────────────────────────────────────
 
   if (currentRoute === 'trade-match') {
@@ -265,7 +282,6 @@ export default function App() {
                 onUpdateCount={handleUpdateCount}
                 onSelectSection={handleJumpToSection}
                 onResetCollection={handleResetCollection}
-                syncStatus={syncStatus}
                 userDisplayName={user ? (profile?.display_name ?? null) : undefined}
               />
             </motion.div>
@@ -341,6 +357,23 @@ export default function App() {
         onSelectSection={handleJumpToSection}
         collectionState={collectionState}
       />
+
+      {/* SYNC TOAST */}
+      {syncToast && (
+        <motion.div
+          initial={{ opacity: 0, y: -12 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -12 }}
+          className="fixed top-4 left-1/2 -translate-x-1/2 z-50"
+        >
+          <div className="bg-emerald-900/95 backdrop-blur-md border border-emerald-700/70 px-4 py-2.5 rounded-2xl shadow-2xl flex items-center gap-2.5">
+            <div className={`w-2 h-2 rounded-full ${
+              syncToast === 'Sincronizado' ? 'bg-emerald-400' : 'bg-red-400'
+            }`} />
+            <span className="text-[11px] font-bold text-emerald-100 font-sans">{syncToast}</span>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }
