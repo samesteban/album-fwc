@@ -105,17 +105,7 @@ export default function Dashboard({
 
   return (
     <div id="dashboard-container" className="space-y-6">
-      {/* SECCIÓN DEL TITULO/HEADER DEL APARTADO */}
-      <div className="flex justify-between items-center bg-emerald-900 text-white p-4.5 rounded-3xl shadow-xl border border-emerald-800">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center border-2 border-white shadow-inner shrink-0 text-emerald-950">
-            <Trophy className="w-5.5 h-5.5 stroke-[2.5]" />
-          </div>
-          <div>
-            <h1 className="text-xl font-black tracking-tight text-white">Álbum Copa Mundial <span className="text-yellow-400">FIFA</span> 2026</h1>
-          </div>
-        </div>
-      </div>
+
 
       {/* BUSCADOR REACTIVO DE LÁMINAS */}
       <div id="search-box" className="bg-emerald-900/55 border border-emerald-800/80 p-4 rounded-3xl shadow-lg">
