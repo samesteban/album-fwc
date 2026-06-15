@@ -284,6 +284,7 @@ export default function App() {
                 onResetCollection={handleResetCollection}
                 userDisplayName={user ? (profile?.display_name ?? null) : undefined}
                 userShareId={profile?.share_id}
+                userId={user?.id}
               />
             </motion.div>
           ) : (

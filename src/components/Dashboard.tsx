@@ -19,6 +19,7 @@ interface DashboardProps {
   /** Present = authenticated, undefined = not logged in */
   userDisplayName?: string | null;
   userShareId?: string | null;
+  userId?: string;
 }
 
 export default function Dashboard({
@@ -29,6 +30,7 @@ export default function Dashboard({
   onResetCollection,
   userDisplayName,
   userShareId,
+  userId,
 }: DashboardProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -327,6 +329,7 @@ export default function Dashboard({
           collectionState={collectionState}
           displayName={userDisplayName ?? null}
           userShareId={userShareId}
+          userId={userId}
         />
       )}
 

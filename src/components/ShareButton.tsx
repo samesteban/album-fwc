@@ -13,12 +13,13 @@ interface ShareButtonProps {
   collectionState: CollectionState;
   displayName: string | null;
   userShareId?: string | null;
+  userId?: string;
 }
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const STORAGE_KEY = 'album_share_metadata';
 
-export default function ShareButton({ collectionState, displayName, userShareId }: ShareButtonProps) {
+export default function ShareButton({ collectionState, displayName, userShareId, userId }: ShareButtonProps) {
   const [state, setState] = useState<ShareGenerationState>('idle');
   const [shareUrl, setShareUrl] = useState<string>('');
   const [copied, setCopied] = useState(false);
@@ -60,13 +61,14 @@ export default function ShareButton({ collectionState, displayName, userShareId 
   };
 
   const persistShareId = useCallback(async (shareId: string) => {
-    // Save short share ID to Supabase profile so it syncs across devices
+    if (!userId) return;
     const { error } = await supabase
       .from('profiles')
       .update({ share_id: shareId })
-      .eq('share_id', null); // only set it once — first device wins
+      .eq('id', userId)
+      .is('share_id', null);
     if (error) console.error('Failed to persist share_id:', error);
-  }, []);
+  }, [userId]);
 
   const clearMetadata = () => {
     localStorage.removeItem(STORAGE_KEY);
@@ -77,8 +79,8 @@ export default function ShareButton({ collectionState, displayName, userShareId 
     setState('generating');
 
     try {
-      // Use stored share ID from profile, falling back to localStorage, then generate new
-      const shareId = savedMeta?.shareId ?? nanoid(7);
+      // Always prefer profile ID (same across devices), then localStorage, then generate new
+      const shareId = userShareId ?? savedMeta?.shareId ?? nanoid(7);
       const createdAt = new Date().toISOString();
 
       const blob = {
