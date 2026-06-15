@@ -30,7 +30,7 @@ function TradeItemCard({ item }: { item: TradeMatchItem; key?: string }) {
   return (
     <div className="flex items-center gap-2.5 bg-emerald-950/60 p-3 rounded-2xl border border-emerald-800/70 shadow-sm">
       <span className="text-xl shrink-0">{item.sectionFlag}</span>
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5 flex-wrap">
           <span className="font-mono font-black text-white text-xs bg-emerald-950 px-1.5 py-0.5 rounded border border-emerald-800/50">
             {item.sectionId} {item.num}
@@ -42,6 +42,15 @@ function TradeItemCard({ item }: { item: TradeMatchItem; key?: string }) {
           </p>
         )}
       </div>
+      {item.surplusOwner && (
+        <span className={`shrink-0 text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded-full ${
+          item.surplusOwner === 'mine'
+            ? 'bg-yellow-400/15 text-yellow-400 border border-yellow-400/30'
+            : 'bg-amber-400/15 text-amber-400 border border-amber-400/30'
+        }`}>
+          {item.surplusOwner === 'mine' ? 'Mía' : 'Suya'}
+        </span>
+      )}
     </div>
   );
 }
@@ -81,7 +90,7 @@ export default function TradeMatchPage() {
       setIsSameId(true);
       setIsOtherEmpty(false);
       setIsUserEmpty(false);
-      setResult({ vosLeDas: [], elxTeDa: [], matches: [] });
+      setResult({ vosLeDas: [], elxTeDa: [], matches: [], surplus: [] });
       setPageState('results');
       return;
     }
@@ -266,7 +275,7 @@ export default function TradeMatchPage() {
   // ── Results State ────────────────────────────────────────────
 
   if (pageState === 'results' && result) {
-    const totalItems = result.vosLeDas.length + result.elxTeDa.length;
+    const totalItems = result.vosLeDas.length + result.elxTeDa.length + result.surplus.length;
     const isEmpty = totalItems === 0;
 
     return (
@@ -374,6 +383,35 @@ export default function TradeMatchPage() {
                     </p>
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* Cartas fuera del intercambio */}
+          {result.surplus.length > 0 && (
+            <div className="bg-emerald-900/50 border border-dashed border-emerald-700/60 p-4 rounded-3xl shadow-md">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-emerald-400">
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                </span>
+                <h3 className="text-sm font-black uppercase tracking-tight text-emerald-300">
+                  Fuera del intercambio
+                </h3>
+                <span className="ml-auto text-[10px] bg-emerald-950 text-emerald-400 px-2 py-0.5 rounded-full font-mono font-bold">
+                  {result.surplus.length} carta{result.surplus.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+              <p className="text-[10px] text-emerald-500 mb-3 leading-relaxed font-medium">
+                Estas cartas quedan fuera para que el intercambio sea parejo. Si querés incluirlas, ajustá el intercambio con la otra persona.
+              </p>
+              <div className="space-y-2">
+                {result.surplus.map(item => (
+                  <TradeItemCard key={item.cardId} item={item} />
+                ))}
               </div>
             </div>
           )}

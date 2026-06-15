@@ -108,7 +108,7 @@ export interface ShareMetadata {
 
 // ── Trade Match Types ──────────────────────────────────────────
 
-export type TradeCategory = 'vosLeDas' | 'elxTeDa' | 'match';
+export type TradeCategory = 'vosLeDas' | 'elxTeDa' | 'match' | 'surplus';
 
 export interface TradeMatchItem {
   cardId: string;
@@ -120,10 +120,12 @@ export interface TradeMatchItem {
   category: TradeCategory;
   sectionName: string;
   sectionFlag?: string;
+  surplusOwner?: 'mine' | 'theirs';
 }
 
 export interface TradeResult {
   vosLeDas: TradeMatchItem[];
   elxTeDa: TradeMatchItem[];
   matches: TradeMatchItem[];
+  surplus: TradeMatchItem[];
 }
