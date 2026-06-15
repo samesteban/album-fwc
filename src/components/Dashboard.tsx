@@ -18,6 +18,7 @@ interface DashboardProps {
   onResetCollection: () => void;
   /** Present = authenticated, undefined = not logged in */
   userDisplayName?: string | null;
+  userId?: string;
 }
 
 export default function Dashboard({
@@ -27,6 +28,7 @@ export default function Dashboard({
   onSelectSection,
   onResetCollection,
   userDisplayName,
+  userId,
 }: DashboardProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -324,6 +326,7 @@ export default function Dashboard({
         <ShareButton
           collectionState={collectionState}
           displayName={userDisplayName ?? null}
+          userId={userId}
         />
       )}
 

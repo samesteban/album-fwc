@@ -283,6 +283,7 @@ export default function App() {
                 onSelectSection={handleJumpToSection}
                 onResetCollection={handleResetCollection}
                 userDisplayName={user ? (profile?.display_name ?? null) : undefined}
+                userId={user?.id}
               />
             </motion.div>
           ) : (

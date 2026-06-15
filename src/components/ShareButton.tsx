@@ -12,12 +12,13 @@ import type { CollectionState, ShareGenerationState, ShareMetadata } from '../ty
 interface ShareButtonProps {
   collectionState: CollectionState;
   displayName: string | null;
+  userId?: string;
 }
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const STORAGE_KEY = 'album_share_metadata';
 
-export default function ShareButton({ collectionState, displayName }: ShareButtonProps) {
+export default function ShareButton({ collectionState, displayName, userId }: ShareButtonProps) {
   const [state, setState] = useState<ShareGenerationState>('idle');
   const [shareUrl, setShareUrl] = useState<string>('');
   const [copied, setCopied] = useState(false);
@@ -28,6 +29,13 @@ export default function ShareButton({ collectionState, displayName }: ShareButto
 
   // Load saved share metadata on mount
   useEffect(() => {
+    if (userId) {
+      // Logged in: deterministic ID from Supabase UID
+      setSavedMeta({ shareId: userId, createdAt: '' });
+      setShareUrl(`${window.location.origin}/album/${userId}`);
+      return;
+    }
+
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
@@ -40,11 +48,13 @@ export default function ShareButton({ collectionState, displayName }: ShareButto
     } catch {
       // Ignore corrupted data
     }
-  }, []);
+  }, [userId]);
 
   const saveMetadata = (shareId: string) => {
     const meta: ShareMetadata = { shareId, createdAt: new Date().toISOString() };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(meta));
+    if (!userId) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(meta));
+    }
     setSavedMeta(meta);
   };
 
@@ -57,8 +67,8 @@ export default function ShareButton({ collectionState, displayName }: ShareButto
     setState('generating');
 
     try {
-      // Reuse existing ID when updating; generate new one for first share
-      const shareId = savedMeta?.shareId ?? nanoid(7);
+      // Use Supabase UID when logged in (same across devices), else use stored/generated ID
+      const shareId = userId ?? savedMeta?.shareId ?? nanoid(7);
       const createdAt = new Date().toISOString();
 
       const blob = {
