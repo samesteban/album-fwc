@@ -32,7 +32,9 @@ export default function ShareButton({ collectionState, displayName, userShareId,
   useEffect(() => {
     if (userShareId) {
       // Logged in: short ID from Supabase profile (same across devices)
-      setSavedMeta({ shareId: userShareId, createdAt: '' });
+      const meta: ShareMetadata = { shareId: userShareId, createdAt: '' };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(meta));
+      setSavedMeta(meta);
       setShareUrl(`${window.location.origin}/album/${userShareId}`);
       return;
     }
@@ -54,9 +56,7 @@ export default function ShareButton({ collectionState, displayName, userShareId,
 
   const saveMetadata = (shareId: string) => {
     const meta: ShareMetadata = { shareId, createdAt: new Date().toISOString() };
-    if (!userShareId) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(meta));
-    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(meta));
     setSavedMeta(meta);
   };
 

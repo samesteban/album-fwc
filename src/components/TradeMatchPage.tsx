@@ -3,9 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { ArrowLeft, Loader2, AlertCircle, HelpCircle, Search, CheckCircle, ArrowRight } from 'lucide-react';
 import { buildInitialSections, computeTradeMatches } from '../data';
+import { supabase } from '../lib/supabase';
 import type { TradeResult, TradeMatchItem, ShareMetadata } from '../types';
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
@@ -57,18 +58,46 @@ function TradeItemCard({ item }: { item: TradeMatchItem; key?: string }) {
 
 export default function TradeMatchPage() {
   const [pageState, setPageState] = useState<PageState>('form');
-  const [userId, setUserId] = useState<string>(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) {
-        const meta: ShareMetadata = JSON.parse(raw);
-        return meta.shareId || '';
+  const [userId, setUserId] = useState<string>('');
+  const [profileLoading, setProfileLoading] = useState(true);
+
+  // Load userId: try localStorage first, then fallback to Supabase profile
+  useEffect(() => {
+    (async () => {
+      // 1. Try localStorage (anonymous and synced users)
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const meta: ShareMetadata = JSON.parse(raw);
+          if (meta.shareId) {
+            setUserId(meta.shareId);
+            setProfileLoading(false);
+            return;
+          }
+        }
+      } catch {
+        // Ignore corrupted data
       }
-    } catch {
-      // Ignore corrupted data
-    }
-    return '';
-  });
+
+      // 2. Fallback: check Supabase profile for logged-in users
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('share_id')
+          .eq('id', session.user.id)
+          .single();
+        if (profile?.share_id) {
+          const meta: ShareMetadata = { shareId: profile.share_id, createdAt: '' };
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(meta));
+          setUserId(profile.share_id);
+        }
+      }
+
+      setProfileLoading(false);
+    })();
+  }, []);
+
   const [otherId, setOtherId] = useState('');
   const [result, setResult] = useState<TradeResult | null>(null);
   const [errorMessage, setErrorMessage] = useState('');
@@ -158,6 +187,20 @@ export default function TradeMatchPage() {
   // ── Form State (no stored ID) ────────────────────────────────
 
   if (pageState === 'form' && !hasStoredId) {
+    // Still checking Supabase profile — show loading
+    if (profileLoading) {
+      return (
+        <div className="bg-emerald-950 min-h-screen text-slate-100 flex flex-col font-sans antialiased">
+          <div className="flex-1 flex flex-col items-center justify-center gap-4 px-4">
+            <div className="w-16 h-16 bg-yellow-400/10 rounded-full flex items-center justify-center">
+              <Loader2 className="w-8 h-8 text-yellow-400 animate-spin" />
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // No ID found in localStorage or profile
     return (
       <div className="bg-emerald-950 min-h-screen text-slate-100 flex flex-col font-sans antialiased">
         <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-md h-64 bg-yellow-400/5 rounded-full blur-3xl pointer-events-none z-0" />
