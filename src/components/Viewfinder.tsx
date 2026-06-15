@@ -46,11 +46,11 @@ const LABEL_COLOR_MAP: Record<ViewfinderState, string> = {
 
 export default function Viewfinder({ state }: ViewfinderProps) {
   return (
-    <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
+    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center pointer-events-none">
       {/* Viewfinder window — the box-shadow creates the dim overlay */}
       <div
         className={`
-          relative w-[75%] aspect-[4/3] rounded-3xl border-[3px] bg-transparent
+          relative w-[60%] aspect-[3/1] rounded-3xl border-[3px] bg-transparent
           transition-all duration-300 ease-out
           ${GLOW_MAP[state]}
         `}
@@ -66,15 +66,13 @@ export default function Viewfinder({ state }: ViewfinderProps) {
       </div>
 
       {/* Label below the viewfinder */}
-      <div className="absolute bottom-[calc(50%-37.5%*0.75-48px)] left-1/2 -translate-x-1/2">
-        <span className={`
-          text-[10px] font-black uppercase tracking-widest font-mono
-          transition-colors duration-300
-          ${LABEL_COLOR_MAP[state]}
-        `}>
-          {LABEL_MAP[state]}
-        </span>
-      </div>
+      <span className={`
+        mt-3 text-[10px] font-black uppercase tracking-widest font-mono
+        transition-colors duration-300
+        ${LABEL_COLOR_MAP[state]}
+      `}>
+        {LABEL_MAP[state]}
+      </span>
     </div>
   );
 }

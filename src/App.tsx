@@ -22,7 +22,8 @@ import CardGrid from './components/CardGrid';
 import LoginScreen from './components/LoginScreen';
 import AlbumPage from './components/AlbumPage';
 import TradeMatchPage from './components/TradeMatchPage';
-import { Home, BookOpen, Globe, Info, Sparkles, Sliders } from 'lucide-react';
+import ScannerView from './components/ScannerView';
+import { Home, BookOpen, Globe, Info, Sparkles, Sliders, Scan } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function App() {
@@ -78,7 +79,7 @@ export default function App() {
   });
 
   // Pestaña activa actual
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'collection'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'collection' | 'scan'>('dashboard');
 
   // Sección activa
   const [activeSectionId, setActiveSectionId] = useState<string>('MEX');
@@ -265,47 +266,54 @@ export default function App() {
         </div>
       </header>
 
-      {/* MAIN CONTAINER */}
-      <main className="flex-1 w-full max-w-sm mx-auto px-4 pt-4 z-10">
-        <AnimatePresence mode="wait">
-          {activeTab === 'dashboard' ? (
-            <motion.div
-              key="dashboard-view"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              transition={{ duration: 0.15 }}
-            >
-              <Dashboard
-                sections={sections}
-                collectionState={collectionState}
-                onUpdateCount={handleUpdateCount}
-                onSelectSection={handleJumpToSection}
-                onResetCollection={handleResetCollection}
-                userDisplayName={user ? (profile?.display_name ?? null) : undefined}
-                userShareId={profile?.share_id}
-                userId={user?.id}
-              />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="collection-view"
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              transition={{ duration: 0.15 }}
-              className="space-y-4"
-            >
-              <CardGrid
-                section={activeSection}
-                collectionState={collectionState}
-                onUpdateCount={handleUpdateCount}
-                onSetSectionAllState={handleSetSectionAllState}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </main>
+      {/* SCANNER VIEW — full width, no padding */}
+      {activeTab === 'scan' ? (
+        <div className="flex-1 w-full z-10 px-4 pb-2">
+          <ScannerView onCardUpdate={handleUpdateCount} />
+        </div>
+      ) : (
+        /* MAIN CONTAINER */
+        <main className="flex-1 w-full max-w-sm mx-auto px-4 pt-4 z-10">
+          <AnimatePresence mode="wait">
+            {activeTab === 'dashboard' ? (
+              <motion.div
+                key="dashboard-view"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.15 }}
+              >
+                <Dashboard
+                  sections={sections}
+                  collectionState={collectionState}
+                  onUpdateCount={handleUpdateCount}
+                  onSelectSection={handleJumpToSection}
+                  onResetCollection={handleResetCollection}
+                  userDisplayName={user ? (profile?.display_name ?? null) : undefined}
+                  userShareId={profile?.share_id}
+                  userId={user?.id}
+                />
+              </motion.div>
+            ) : (
+              <motion.div
+                key="collection-view"
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.15 }}
+                className="space-y-4"
+              >
+                <CardGrid
+                  section={activeSection}
+                  collectionState={collectionState}
+                  onUpdateCount={handleUpdateCount}
+                  onSetSectionAllState={handleSetSectionAllState}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </main>
+      )}
 
       {/* FLOATING BUTTON */}
       <AnimatePresence>
@@ -336,6 +344,16 @@ export default function App() {
           >
             <Home className="w-5.5 h-5.5 stroke-[2.5]" />
             <span className="text-[10px] font-bold mt-1 font-sans">Resumen</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('scan')}
+            className={`flex flex-col items-center justify-center flex-1 h-full py-1 text-center transition ${
+              activeTab === 'scan' ? 'text-yellow-400 font-extrabold' : 'text-emerald-300/70 hover:text-emerald-100'
+            }`}
+          >
+            <Scan className="w-5.5 h-5.5 stroke-[2.5]" />
+            <span className="text-[10px] font-bold mt-1 font-sans">Escanear</span>
           </button>
 
           <button

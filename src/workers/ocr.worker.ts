@@ -87,9 +87,10 @@ async function initWorker(): Promise<void> {
       // RAW_LINE: treat the image as a single raw text line, no layout
       // analysis at all. Ideal for pre-cropped sticker code zones.
       tessedit_pageseg_mode: '13',
-      // Restrict character set to uppercase letters, digits, and space
-      // to prevent number/letter confusion (e.g. 5→S, 0→O, 1→I).
-      tessedit_char_whitelist: ' ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789',
+      // Strict whitelist — only uppercase letters, digits, and space.
+      // Prevents the engine from hallucinating lowercase, punctuation,
+      // or special chars that aren't part of sticker codes.
+      tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ',
     });
 
     self.postMessage({ type: 'ready' } satisfies OcrResponse);
