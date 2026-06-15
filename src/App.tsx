@@ -20,12 +20,30 @@ import Dashboard from './components/Dashboard';
 import SectionModal from './components/SectionModal';
 import CardGrid from './components/CardGrid';
 import LoginScreen from './components/LoginScreen';
+import AlbumPage from './components/AlbumPage';
 import { Home, BookOpen, Globe, Info, Sparkles, Sliders } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function App() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const sync = useSync();
+
+  // ── Album share path detection ───────────────────────────────
+
+  const [albumShareId, setAlbumShareId] = useState<string | null>(() => {
+    const match = window.location.pathname.match(/^\/album\/([a-zA-Z0-9_-]+)$/);
+    return match ? match[1] : null;
+  });
+
+  useEffect(() => {
+    const handleLocationChange = () => {
+      const match = window.location.pathname.match(/^\/album\/([a-zA-Z0-9_-]+)$/);
+      setAlbumShareId(match ? match[1] : null);
+    };
+
+    window.addEventListener('popstate', handleLocationChange);
+    return () => window.removeEventListener('popstate', handleLocationChange);
+  }, []);
 
   // Lista persistente de secciones con su estructura original
   const sections = useMemo(() => buildInitialSections(), []);
@@ -159,6 +177,12 @@ export default function App() {
 
   const syncStatus = sync.status;
 
+  // ── Album share standalone view ────────────────────────────
+
+  if (albumShareId) {
+    return <AlbumPage shareId={albumShareId} />;
+  }
+
   return (
     <div className="bg-emerald-950 min-h-screen text-slate-100 flex flex-col font-sans select-none pb-24 antialiased">
       {/* GLOW DECORATIVO DE FONDO */}
@@ -219,6 +243,7 @@ export default function App() {
                 onSelectSection={handleJumpToSection}
                 onResetCollection={handleResetCollection}
                 syncStatus={syncStatus}
+                userDisplayName={user ? (profile?.display_name ?? null) : undefined}
               />
             </motion.div>
           ) : (

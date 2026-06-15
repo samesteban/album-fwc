@@ -6,6 +6,6 @@ coverage/
 *.log
 .env*
 !.env.example
-openspecs/
+openspecs/*
 .atl
 .atl/*

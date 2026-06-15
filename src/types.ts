@@ -88,3 +88,15 @@ export interface OcrErrorResponse {
 }
 
 export type OcrResponse = OcrReadyResponse | OcrResultResponse | OcrErrorResponse;
+
+// ── Album Sharing Types ──────────────────────────────────────────
+
+export interface ShareBlobData {
+  name: string | null;              // profile.display_name
+  collectionState: CollectionState; // cardId → count
+  createdAt: string;                // ISO 8601
+}
+
+export type ShareGenerationState = 'idle' | 'generating' | 'done' | 'error';
+
+export type AlbumPageState = 'loading' | 'loaded' | 'not-found' | 'error';

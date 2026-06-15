@@ -8,6 +8,7 @@ import { Section, CollectionState, CollectionStats } from '../types';
 import { getTopRepeatedCards, calculateStats } from '../data';
 import { Search, Trophy, CheckCircle, HelpCircle, Plus, Minus, ArrowRight, RotateCcw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import ShareButton from './ShareButton';
 
 interface DashboardProps {
   sections: Section[];
@@ -16,6 +17,8 @@ interface DashboardProps {
   onSelectSection: (sectionId: string) => void;
   onResetCollection: () => void;
   syncStatus?: string;
+  /** Present = authenticated, undefined = not logged in */
+  userDisplayName?: string | null;
 }
 
 export default function Dashboard({
@@ -25,6 +28,7 @@ export default function Dashboard({
   onSelectSection,
   onResetCollection,
   syncStatus,
+  userDisplayName,
 }: DashboardProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
@@ -339,6 +343,14 @@ export default function Dashboard({
           </div>
         </div>
       </div>
+
+      {/* COMPARTIR MI ÁLBUM */}
+      {userDisplayName !== undefined && (
+        <ShareButton
+          collectionState={collectionState}
+          displayName={userDisplayName ?? null}
+        />
+      )}
 
       {/* TOP 10 REPETIDAS */}
       <div id="top-10-repeated shadow-md" className="bg-emerald-900/60 border border-emerald-800/80 p-4 rounded-3xl">
