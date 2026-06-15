@@ -21,6 +21,7 @@ export default function ShareButton({ collectionState, displayName }: ShareButto
   const [state, setState] = useState<ShareGenerationState>('idle');
   const [shareUrl, setShareUrl] = useState<string>('');
   const [copied, setCopied] = useState(false);
+  const [copiedId, setCopiedId] = useState(false);
   const [savedMeta, setSavedMeta] = useState<ShareMetadata | null>(null);
 
   const isCollectionEmpty = Object.keys(collectionState).length === 0;
@@ -105,9 +106,21 @@ export default function ShareButton({ collectionState, displayName }: ShareButto
     }
   }, [shareUrl]);
 
+  const handleCopyId = useCallback(async () => {
+    try {
+      const id = savedMeta?.shareId ?? (shareUrl.split('/').pop() || '');
+      await navigator.clipboard.writeText(id);
+      setCopiedId(true);
+      setTimeout(() => setCopiedId(false), 2000);
+    } catch {
+      setCopiedId(false);
+    }
+  }, [shareUrl, savedMeta]);
+
   const handleReset = useCallback(() => {
     setState('idle');
     setCopied(false);
+    setCopiedId(false);
     // Keep savedMeta — user can still update the existing link
   }, []);
 
@@ -116,6 +129,7 @@ export default function ShareButton({ collectionState, displayName }: ShareButto
     setState('idle');
     setShareUrl('');
     setCopied(false);
+    setCopiedId(false);
   }, []);
 
   if (isCollectionEmpty) return null;
@@ -143,18 +157,43 @@ export default function ShareButton({ collectionState, displayName }: ShareButto
             <RefreshCw className="w-5 h-5 stroke-[2.5]" />
             Actualizar mi Álbum
           </button>
-          <div className="flex items-center justify-between px-1">
-            <span className="text-[10px] text-emerald-400 font-mono truncate max-w-[70%]">
-              {shareUrl}
-            </span>
+          <div className="grid grid-cols-2 gap-2">
             <button
-              onClick={handleUnlink}
-              className="text-[9px] text-red-400/70 hover:text-red-300 font-bold uppercase tracking-wider transition flex items-center gap-1 shrink-0"
+              onClick={handleCopy}
+              className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all ${
+                copied
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-emerald-800 hover:bg-emerald-700 text-white'
+              }`}
             >
-              <Trash2 className="w-3 h-3" />
-              Desvincular
+              {copied ? (
+                <><Check className="w-3.5 h-3.5" /> Copiado</>
+              ) : (
+                <><Copy className="w-3.5 h-3.5" /> Copiar URL</>
+              )}
+            </button>
+            <button
+              onClick={handleCopyId}
+              className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all ${
+                copiedId
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-emerald-800 hover:bg-emerald-700 text-white'
+              }`}
+            >
+              {copiedId ? (
+                <><Check className="w-3.5 h-3.5" /> Copiado</>
+              ) : (
+                <><Copy className="w-3.5 h-3.5" /> Copiar ID</>
+              )}
             </button>
           </div>
+          <button
+            onClick={handleUnlink}
+            className="w-full text-[11px] text-red-400/70 hover:text-red-300 font-bold uppercase tracking-wider transition flex items-center justify-center gap-1.5 py-2"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            Desvincular
+          </button>
         </div>
       )}
 
@@ -183,28 +222,33 @@ export default function ShareButton({ collectionState, displayName }: ShareButto
             </button>
           </div>
 
-          <div className="flex items-center gap-2 bg-emerald-950 border border-emerald-700/60 rounded-2xl px-3.5 py-3">
-            <span className="flex-1 text-xs font-mono text-emerald-100 truncate select-all">
-              {shareUrl}
-            </span>
+          <div className="grid grid-cols-2 gap-2">
             <button
               onClick={handleCopy}
-              className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl font-bold text-xs uppercase tracking-wider transition-all ${
+              className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all ${
                 copied
                   ? 'bg-emerald-600 text-white'
                   : 'bg-yellow-400 hover:bg-yellow-300 text-emerald-950'
               }`}
             >
               {copied ? (
-                <>
-                  <Check className="w-3.5 h-3.5" />
-                  Copiado!
-                </>
+                <><Check className="w-3.5 h-3.5" /> Copiado</>
               ) : (
-                <>
-                  <Copy className="w-3.5 h-3.5" />
-                  Copiar
-                </>
+                <><Copy className="w-3.5 h-3.5" /> Copiar URL</>
+              )}
+            </button>
+            <button
+              onClick={handleCopyId}
+              className={`flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all ${
+                copiedId
+                  ? 'bg-emerald-600 text-white'
+                  : 'bg-yellow-400 hover:bg-yellow-300 text-emerald-950'
+              }`}
+            >
+              {copiedId ? (
+                <><Check className="w-3.5 h-3.5" /> Copiado</>
+              ) : (
+                <><Copy className="w-3.5 h-3.5" /> Copiar ID</>
               )}
             </button>
           </div>

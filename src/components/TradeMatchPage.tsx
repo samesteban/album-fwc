@@ -46,10 +46,10 @@ function TradeItemCard({ item }: { item: TradeMatchItem; key?: string }) {
       </div>
       <div className="flex items-center gap-2 shrink-0">
         <span className="text-[10px] font-extrabold bg-emerald-900 text-emerald-200 px-2 py-1 rounded-lg font-mono">
-          Vos: <span className="text-yellow-400">{item.userCount}</span>
+          Tú: <span className="text-yellow-400">{item.userCount}</span>
         </span>
         <span className="text-[10px] font-extrabold bg-emerald-900 text-emerald-200 px-2 py-1 rounded-lg font-mono">
-          Elx: <span className="text-amber-400">{item.otherCount}</span>
+          Otro: <span className="text-amber-400">{item.otherCount}</span>
         </span>
       </div>
     </div>
@@ -168,7 +168,7 @@ export default function TradeMatchPage() {
             <HelpCircle className="w-10 h-10 text-emerald-500" />
           </div>
           <h1 className="text-xl font-black text-white text-center">
-            Primero compartí tu álbum
+            Primero comparte tu álbum
           </h1>
           <p className="text-sm text-emerald-300 text-center max-w-xs leading-relaxed">
             Necesitás generar un enlace de tu álbum antes de poder compararlo con otra persona.
@@ -229,7 +229,7 @@ export default function TradeMatchPage() {
                 type="text"
                 value={otherId}
                 onChange={e => setOtherId(e.target.value)}
-                placeholder="Pegá el ID de la otra persona"
+                placeholder="Pega el ID de la otra persona"
                 className="w-full px-4 py-3 bg-emerald-950 border border-emerald-800 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-400/20 rounded-2xl text-white placeholder-emerald-400/65 outline-none transition duration-150 text-sm"
               />
             </div>
@@ -303,7 +303,7 @@ export default function TradeMatchPage() {
               </div>
               <h2 className="text-lg font-black text-white">Mismo álbum</h2>
               <p className="text-sm text-emerald-300 leading-relaxed">
-                Estás comparando con vos mismo. No hay intercambios posibles.
+                Estás comparando contigo mismo. No hay intercambios posibles.
               </p>
             </div>
           )}
@@ -329,7 +329,7 @@ export default function TradeMatchPage() {
               </div>
               <h2 className="text-lg font-black text-white">Tu álbum está vacío</h2>
               <p className="text-sm text-emerald-300 leading-relaxed">
-                Primero registrá algunas láminas antes de comparar.
+                Primero registra algunas láminas antes de comparar.
               </p>
             </div>
           )}
@@ -353,7 +353,7 @@ export default function TradeMatchPage() {
               {/* Vos le das */}
               {result.vosLeDas.length > 0 ? (
                 <SectionBlock
-                  title="Vos le das"
+                  title="Tú le das"
                   icon={<ArrowRight className="w-4 h-4 stroke-[2.5]" />}
                   items={result.vosLeDas}
                   accent="emerald"
@@ -362,7 +362,7 @@ export default function TradeMatchPage() {
               ) : (
                 <div className="bg-emerald-900/60 border border-emerald-800/80 p-4 rounded-3xl shadow-md text-center">
                   <p className="text-xs font-bold text-emerald-400">
-                    No tenés repetidas que esta persona necesite
+                    No tienes repetidas que esta persona necesite
                   </p>
                 </div>
               )}
@@ -370,11 +370,11 @@ export default function TradeMatchPage() {
               {/* Elx te da */}
               {result.elxTeDa.length > 0 ? (
                 <SectionBlock
-                  title="Elx te da"
+                  title="Te da"
                   icon={<ArrowLeft className="w-4 h-4 stroke-[2.5]" />}
                   items={result.elxTeDa}
                   accent="amber"
-                  badge="Repetidas de elx"
+                  badge="Repetidas de la otra persona"
                 />
               ) : (
                 <div className="bg-emerald-900/60 border border-emerald-800/80 p-4 rounded-3xl shadow-md text-center">
