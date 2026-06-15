@@ -97,7 +97,7 @@ export default function Dashboard({
   }, [allCardsFlat, searchTerm]);
 
   // Estilo del porcentaje de progreso
-  const circleRadius = 50;
+  const circleRadius = 38;
   const circumference = 2 * Math.PI * circleRadius;
   const strokeDashoffset = circumference - (stats.completionPercentage / 100) * circumference;
 
