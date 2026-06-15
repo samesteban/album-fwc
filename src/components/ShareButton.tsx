@@ -12,13 +12,13 @@ import type { CollectionState, ShareGenerationState, ShareMetadata } from '../ty
 interface ShareButtonProps {
   collectionState: CollectionState;
   displayName: string | null;
-  userId?: string;
+  userShareId?: string | null;
 }
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const STORAGE_KEY = 'album_share_metadata';
 
-export default function ShareButton({ collectionState, displayName, userId }: ShareButtonProps) {
+export default function ShareButton({ collectionState, displayName, userShareId }: ShareButtonProps) {
   const [state, setState] = useState<ShareGenerationState>('idle');
   const [shareUrl, setShareUrl] = useState<string>('');
   const [copied, setCopied] = useState(false);
@@ -29,13 +29,14 @@ export default function ShareButton({ collectionState, displayName, userId }: Sh
 
   // Load saved share metadata on mount
   useEffect(() => {
-    if (userId) {
-      // Logged in: deterministic ID from Supabase UID
-      setSavedMeta({ shareId: userId, createdAt: '' });
-      setShareUrl(`${window.location.origin}/album/${userId}`);
+    if (userShareId) {
+      // Logged in: short ID from Supabase profile (same across devices)
+      setSavedMeta({ shareId: userShareId, createdAt: '' });
+      setShareUrl(`${window.location.origin}/album/${userShareId}`);
       return;
     }
 
+    // Anonymous: load from localStorage
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
@@ -48,15 +49,24 @@ export default function ShareButton({ collectionState, displayName, userId }: Sh
     } catch {
       // Ignore corrupted data
     }
-  }, [userId]);
+  }, [userShareId]);
 
   const saveMetadata = (shareId: string) => {
     const meta: ShareMetadata = { shareId, createdAt: new Date().toISOString() };
-    if (!userId) {
+    if (!userShareId) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(meta));
     }
     setSavedMeta(meta);
   };
+
+  const persistShareId = useCallback(async (shareId: string) => {
+    // Save short share ID to Supabase profile so it syncs across devices
+    const { error } = await supabase
+      .from('profiles')
+      .update({ share_id: shareId })
+      .eq('share_id', null); // only set it once — first device wins
+    if (error) console.error('Failed to persist share_id:', error);
+  }, []);
 
   const clearMetadata = () => {
     localStorage.removeItem(STORAGE_KEY);
@@ -67,8 +77,8 @@ export default function ShareButton({ collectionState, displayName, userId }: Sh
     setState('generating');
 
     try {
-      // Use Supabase UID when logged in (same across devices), else use stored/generated ID
-      const shareId = userId ?? savedMeta?.shareId ?? nanoid(7);
+      // Use stored share ID from profile, falling back to localStorage, then generate new
+      const shareId = savedMeta?.shareId ?? nanoid(7);
       const createdAt = new Date().toISOString();
 
       const blob = {
@@ -98,13 +108,18 @@ export default function ShareButton({ collectionState, displayName, userId }: Sh
         saveMetadata(shareId);
       }
 
+      // Persist short ID to Supabase profile for cross-device consistency
+      if (!userShareId) {
+        persistShareId(shareId);
+      }
+
       setShareUrl(`${window.location.origin}/album/${shareId}`);
       setState('done');
     } catch (err) {
       console.error('Error sharing album:', err);
       setState('error');
     }
-  }, [collectionState, displayName, savedMeta]);
+  }, [collectionState, displayName, savedMeta, userShareId, persistShareId]);
 
   const handleCopy = useCallback(async () => {
     try {

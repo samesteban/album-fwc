@@ -14,6 +14,7 @@ export interface ProfileRow {
   id: string;
   display_name: string | null;
   avatar_url: string | null;
+  share_id: string | null;
   created_at: string;
 }
 
@@ -70,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       id: userId,
       display_name: null,
       avatar_url: null,
+      share_id: null,
       created_at: new Date().toISOString(),
     };
 
