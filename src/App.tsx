@@ -21,6 +21,7 @@ import SectionModal from './components/SectionModal';
 import CardGrid from './components/CardGrid';
 import LoginScreen from './components/LoginScreen';
 import AlbumPage from './components/AlbumPage';
+import TradeMatchPage from './components/TradeMatchPage';
 import { Home, BookOpen, Globe, Info, Sparkles, Sliders } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -28,7 +29,13 @@ export default function App() {
   const { user, profile } = useAuth();
   const sync = useSync();
 
-  // ── Album share path detection ───────────────────────────────
+  // ── SPA route matching ──────────────────────────────────────
+
+  const [currentRoute, setCurrentRoute] = useState<'app' | 'album' | 'trade-match'>(() => {
+    if (window.location.pathname.match(/^\/album\/([a-zA-Z0-9_-]+)$/)) return 'album';
+    if (window.location.pathname === '/match') return 'trade-match';
+    return 'app';
+  });
 
   const [albumShareId, setAlbumShareId] = useState<string | null>(() => {
     const match = window.location.pathname.match(/^\/album\/([a-zA-Z0-9_-]+)$/);
@@ -37,8 +44,20 @@ export default function App() {
 
   useEffect(() => {
     const handleLocationChange = () => {
-      const match = window.location.pathname.match(/^\/album\/([a-zA-Z0-9_-]+)$/);
-      setAlbumShareId(match ? match[1] : null);
+      const path = window.location.pathname;
+      if (path === '/match') {
+        setCurrentRoute('trade-match');
+        setAlbumShareId(null);
+      } else {
+        const match = path.match(/^\/album\/([a-zA-Z0-9_-]+)$/);
+        if (match) {
+          setCurrentRoute('album');
+          setAlbumShareId(match[1]);
+        } else {
+          setCurrentRoute('app');
+          setAlbumShareId(null);
+        }
+      }
     };
 
     window.addEventListener('popstate', handleLocationChange);
@@ -177,9 +196,13 @@ export default function App() {
 
   const syncStatus = sync.status;
 
-  // ── Album share standalone view ────────────────────────────
+  // ── SPA route rendering ─────────────────────────────────────
 
-  if (albumShareId) {
+  if (currentRoute === 'trade-match') {
+    return <TradeMatchPage />;
+  }
+
+  if (currentRoute === 'album' && albumShareId) {
     return <AlbumPage shareId={albumShareId} />;
   }
 

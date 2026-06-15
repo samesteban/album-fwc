@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { Section, Card, CollectionState, CollectionStats, type StorageV2 } from './types';
+import { Section, Card, CollectionState, CollectionStats, type StorageV2, type TradeResult, type TradeMatchItem } from './types';
 
 // Metadatos oficiales de las secciones en el orden exacto especificado
 export const SECTIONS_METADATA: { id: string; name: string; type: 'team' | 'special'; flag: string }[] = [
@@ -320,6 +320,73 @@ export function getTopRepeatedCards(sections: Section[], currentState: Collectio
   return repeatedList
     .sort((a, b) => b.repeatedAmount - a.repeatedAmount)
     .slice(0, limit);
+}
+
+// ── Trade Match ────────────────────────────────────────────────
+
+/**
+ * Compute trade opportunities between two collectors.
+ * O(n) single pass over all sections/cards.
+ *
+ * - vosLeDas: user has duplicates (count > 1) and other has none (count === 0)
+ * - elxTeDa: other has duplicates and user has none
+ * - matches: both have duplicates
+ */
+export function computeTradeMatches(
+  sections: Section[],
+  userState: CollectionState,
+  otherState: CollectionState
+): TradeResult {
+  const vosLeDas: TradeMatchItem[] = [];
+  const elxTeDa: TradeMatchItem[] = [];
+  const matches: TradeMatchItem[] = [];
+
+  sections.forEach(section => {
+    section.cards.forEach(card => {
+      const userCount = userState[card.id] || 0;
+      const otherCount = otherState[card.id] || 0;
+
+      if (userCount > 1 && otherCount === 0) {
+        vosLeDas.push({
+          cardId: card.id,
+          sectionId: card.sectionId,
+          num: card.num,
+          playerName: card.playerName,
+          userCount,
+          otherCount,
+          category: 'vosLeDas',
+          sectionName: section.name,
+          sectionFlag: section.flag,
+        });
+      } else if (otherCount > 1 && userCount === 0) {
+        elxTeDa.push({
+          cardId: card.id,
+          sectionId: card.sectionId,
+          num: card.num,
+          playerName: card.playerName,
+          userCount,
+          otherCount,
+          category: 'elxTeDa',
+          sectionName: section.name,
+          sectionFlag: section.flag,
+        });
+      } else if (userCount > 1 && otherCount > 1) {
+        matches.push({
+          cardId: card.id,
+          sectionId: card.sectionId,
+          num: card.num,
+          playerName: card.playerName,
+          userCount,
+          otherCount,
+          category: 'match',
+          sectionName: section.name,
+          sectionFlag: section.flag,
+        });
+      }
+    });
+  });
+
+  return { vosLeDas, elxTeDa, matches };
 }
 
 /**

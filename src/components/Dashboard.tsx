@@ -352,6 +352,25 @@ export default function Dashboard({
         />
       )}
 
+      {/* COMPARADOR DE ÁLBUMES */}
+      <a
+        href="/match"
+        className="block bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 border border-emerald-500/30 p-4 rounded-3xl shadow-lg transition-all active:scale-[0.98]"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-yellow-400 rounded-full flex items-center justify-center border-2 border-white shadow-inner shrink-0">
+            <span className="text-emerald-950 font-black text-sm text-center leading-none">⇄</span>
+          </div>
+          <div className="min-w-0">
+            <h3 className="text-sm font-black text-white">Comparar Álbumes</h3>
+            <p className="text-[10px] text-emerald-300 font-semibold mt-0.5">
+              Encontrá intercambios con otros coleccionistas
+            </p>
+          </div>
+          <ArrowRight className="w-5 h-5 text-yellow-400 shrink-0 ml-auto stroke-[2.5]" />
+        </div>
+      </a>
+
       {/* TOP 10 REPETIDAS */}
       <div id="top-10-repeated shadow-md" className="bg-emerald-900/60 border border-emerald-800/80 p-4 rounded-3xl">
         <div className="flex items-center justify-between mb-3.5">

@@ -105,3 +105,25 @@ export interface ShareMetadata {
   shareId: string;
   createdAt: string;
 }
+
+// ── Trade Match Types ──────────────────────────────────────────
+
+export type TradeCategory = 'vosLeDas' | 'elxTeDa' | 'match';
+
+export interface TradeMatchItem {
+  cardId: string;
+  sectionId: string;
+  num: string;
+  playerName?: string;
+  userCount: number;
+  otherCount: number;
+  category: TradeCategory;
+  sectionName: string;
+  sectionFlag?: string;
+}
+
+export interface TradeResult {
+  vosLeDas: TradeMatchItem[];
+  elxTeDa: TradeMatchItem[];
+  matches: TradeMatchItem[];
+}
