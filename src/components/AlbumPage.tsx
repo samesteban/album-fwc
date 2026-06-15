@@ -208,7 +208,7 @@ export default function AlbumPage({ shareId }: AlbumPageProps) {
       </header>
 
       {/* MAIN */}
-      <main className="flex-1 w-full max-w-sm mx-auto px-4 pt-4 z-10 space-y-6">
+      <main className="flex-1 w-full max-w-sm mx-auto px-1 pt-4 z-10 space-y-2">
         {!hasCollection ? (
           <div className="text-center py-12">
             <div className="w-16 h-16 bg-emerald-900/60 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -276,7 +276,7 @@ export default function AlbumPage({ shareId }: AlbumPageProps) {
                     return (
                       <div
                         key={card.id}
-                        className={`w-9 h-9 rounded-lg flex items-center justify-center text-[10px] font-bold font-mono border transition-all ${
+                        className={`w-9 h-9 rounded-lg flex items-center justify-center text-[11px] font-bold font-mono border transition-all ${
                           isPasted
                             ? count > 1
                               ? 'bg-yellow-400/20 border-yellow-400/40 text-yellow-400 shadow-sm'
