@@ -343,11 +343,11 @@ export default function TradeMatchPage() {
               <div>
                 {result.vosLeDas.length > 0 ? (
                   <SectionBlock
-                    title="Tú le das"
+                    title="Entregas"
                     icon={<ArrowRight className="w-4 h-4 stroke-[2.5]" />}
                     items={result.vosLeDas}
                     accent="emerald"
-                    badge="Tus repetidas"
+                    badge=""
                   />
                 ) : (
                   <div className="bg-emerald-900/60 border border-emerald-800/80 p-3 rounded-3xl shadow-md text-center h-full flex items-center justify-center">
@@ -361,11 +361,11 @@ export default function TradeMatchPage() {
               <div>
                 {result.elxTeDa.length > 0 ? (
                   <SectionBlock
-                    title="Te da"
+                    title="Recibes"
                     icon={<ArrowLeft className="w-4 h-4 stroke-[2.5]" />}
                     items={result.elxTeDa}
                     accent="amber"
-                    badge="Sus repetidas"
+                    badge=""
                   />
                 ) : (
                   <div className="bg-emerald-900/60 border border-emerald-800/80 p-3 rounded-3xl shadow-md text-center h-full flex items-center justify-center">
@@ -456,9 +456,11 @@ function SectionBlock({ title, icon, items, accent, badge, highlighted }: Sectio
         <h3 className={`text-sm font-black uppercase tracking-tight ${titleAccent}`}>
           {title}
         </h3>
-        <span className={`ml-auto text-[10px] bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded-full font-mono font-bold`}>
-          {badge}
-        </span>
+        {badge && (
+          <span className="ml-auto text-[10px] bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded-full font-mono font-bold">
+            {badge}
+          </span>
+        )}
       </div>
 
       <div className="space-y-2">
