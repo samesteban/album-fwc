@@ -406,7 +406,7 @@ export default function TradeMatchPage() {
                 </span>
               </div>
               <p className="text-[10px] text-emerald-500 mb-3 leading-relaxed font-medium">
-                Estas cartas quedan fuera para que el intercambio sea parejo. Si querés incluirlas, ajustá el intercambio con la otra persona.
+                Estas cartas quedan fuera para que el intercambio sea parejo. Si quieres incluirlas, ajusta el intercambio con la otra persona.
               </p>
               <div className="space-y-2">
                 {result.surplus.map(item => (
@@ -431,6 +431,13 @@ export default function TradeMatchPage() {
               <ArrowLeft className="w-3.5 h-3.5 stroke-[2.5]" />
               Volver al inicio
             </a>
+          </div>
+
+          {/* Disclaimer */}
+          <div className="bg-emerald-950/40 border border-emerald-800/30 rounded-2xl px-4 py-3">
+            <p className="text-[10px] text-emerald-500 leading-relaxed text-center font-medium">
+              Esta comparación es solo una referencia. Antes de realizar cualquier intercambio, coordina con la otra persona. No hay obligación de intercambiar las cartas sugeridas.
+            </p>
           </div>
         </main>
       </div>
