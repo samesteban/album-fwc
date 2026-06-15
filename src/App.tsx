@@ -20,8 +20,7 @@ import Dashboard from './components/Dashboard';
 import SectionModal from './components/SectionModal';
 import CardGrid from './components/CardGrid';
 import LoginScreen from './components/LoginScreen';
-import ScannerView from './components/ScannerView';
-import { Home, BookOpen, Scan, Globe, Info, Sparkles, Sliders } from 'lucide-react';
+import { Home, BookOpen, Globe, Info, Sparkles, Sliders } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function App() {
@@ -42,7 +41,7 @@ export default function App() {
   });
 
   // Pestaña activa actual
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'collection' | 'scanner'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'collection'>('dashboard');
 
   // Sección activa
   const [activeSectionId, setActiveSectionId] = useState<string>('MEX');
@@ -222,17 +221,6 @@ export default function App() {
                 syncStatus={syncStatus}
               />
             </motion.div>
-          ) : activeTab === 'scanner' ? (
-            <motion.div
-              key="scanner-view"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.15 }}
-              className="-mx-4 -mt-4"
-            >
-              <ScannerView onCardUpdate={handleUpdateCount} />
-            </motion.div>
           ) : (
             <motion.div
               key="collection-view"
@@ -282,16 +270,6 @@ export default function App() {
           >
             <Home className="w-5.5 h-5.5 stroke-[2.5]" />
             <span className="text-[10px] font-bold mt-1 font-sans">Resumen</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab('scanner')}
-            className={`flex flex-col items-center justify-center flex-1 h-full py-1 text-center transition ${
-              activeTab === 'scanner' ? 'text-yellow-400 font-extrabold' : 'text-emerald-300/70 hover:text-emerald-100'
-            }`}
-          >
-            <Scan className="w-5.5 h-5.5 stroke-[2.5]" />
-            <span className="text-[10px] font-bold mt-1 font-sans">Intercambios</span>
           </button>
 
           <button
