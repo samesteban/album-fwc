@@ -100,7 +100,7 @@ export default function ShareButton({ collectionState, displayName, userShareId,
         });
 
       if (uploadError) {
-        console.error('Error uploading share:', uploadError);
+        console.error('Error uploading share:', { message: uploadError.message, cause: uploadError.cause, shareId });
         setState('error');
         return;
       }
