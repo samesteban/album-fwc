@@ -100,3 +100,8 @@ export interface ShareBlobData {
 export type ShareGenerationState = 'idle' | 'generating' | 'done' | 'error';
 
 export type AlbumPageState = 'loading' | 'loaded' | 'not-found' | 'error';
+
+export interface ShareMetadata {
+  shareId: string;
+  createdAt: string;
+}

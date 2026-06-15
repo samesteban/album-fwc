@@ -3,11 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { nanoid } from 'nanoid';
-import { Share2, Copy, Check, Loader2, AlertCircle } from 'lucide-react';
+import { Share2, RefreshCw, Copy, Check, Loader2, AlertCircle, Trash2 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import type { CollectionState, ShareGenerationState } from '../types';
+import type { CollectionState, ShareGenerationState, ShareMetadata } from '../types';
 
 interface ShareButtonProps {
   collectionState: CollectionState;
@@ -15,22 +15,52 @@ interface ShareButtonProps {
 }
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const STORAGE_KEY = 'album_share_metadata';
 
 export default function ShareButton({ collectionState, displayName }: ShareButtonProps) {
   const [state, setState] = useState<ShareGenerationState>('idle');
   const [shareUrl, setShareUrl] = useState<string>('');
   const [copied, setCopied] = useState(false);
+  const [savedMeta, setSavedMeta] = useState<ShareMetadata | null>(null);
 
   const isCollectionEmpty = Object.keys(collectionState).length === 0;
+
+  // Load saved share metadata on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const meta: ShareMetadata = JSON.parse(raw);
+        if (meta.shareId) {
+          setSavedMeta(meta);
+          setShareUrl(`${window.location.origin}/album/${meta.shareId}`);
+        }
+      }
+    } catch {
+      // Ignore corrupted data
+    }
+  }, []);
+
+  const saveMetadata = (shareId: string) => {
+    const meta: ShareMetadata = { shareId, createdAt: new Date().toISOString() };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(meta));
+    setSavedMeta(meta);
+  };
+
+  const clearMetadata = () => {
+    localStorage.removeItem(STORAGE_KEY);
+    setSavedMeta(null);
+  };
 
   const handleShare = useCallback(async () => {
     setState('generating');
 
     try {
-      const shareId = nanoid(7);
+      // Reuse existing ID when updating; generate new one for first share
+      const shareId = savedMeta?.shareId ?? nanoid(7);
       const createdAt = new Date().toISOString();
 
-      const blob: { name: string | null; collectionState: CollectionState; createdAt: string } = {
+      const blob = {
         name: displayName,
         collectionState,
         createdAt,
@@ -43,25 +73,27 @@ export default function ShareButton({ collectionState, displayName }: ShareButto
         .from('album-shares')
         .upload(`public/${shareId}.json`, file, {
           contentType: 'application/json',
-          upsert: false,
+          upsert: true, // Allow overwriting existing share
         });
 
       if (uploadError) {
-        console.error('Error al subir el share:', uploadError);
+        console.error('Error uploading share:', uploadError);
         setState('error');
         return;
       }
 
-      const url = `${SUPABASE_URL}/storage/v1/object/public/album-shares/public/${shareId}.json`;
-      const displayUrl = `${window.location.origin}/album/${shareId}`;
+      // Persist ID on first generation
+      if (!savedMeta) {
+        saveMetadata(shareId);
+      }
 
-      setShareUrl(displayUrl);
+      setShareUrl(`${window.location.origin}/album/${shareId}`);
       setState('done');
     } catch (err) {
-      console.error('Error al generar el share:', err);
+      console.error('Error sharing album:', err);
       setState('error');
     }
-  }, [collectionState, displayName]);
+  }, [collectionState, displayName, savedMeta]);
 
   const handleCopy = useCallback(async () => {
     try {
@@ -69,12 +101,18 @@ export default function ShareButton({ collectionState, displayName }: ShareButto
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // Fallback: select the text manually
       setCopied(false);
     }
   }, [shareUrl]);
 
   const handleReset = useCallback(() => {
+    setState('idle');
+    setCopied(false);
+    // Keep savedMeta — user can still update the existing link
+  }, []);
+
+  const handleUnlink = useCallback(() => {
+    clearMetadata();
     setState('idle');
     setShareUrl('');
     setCopied(false);
@@ -84,7 +122,8 @@ export default function ShareButton({ collectionState, displayName }: ShareButto
 
   return (
     <div className="bg-emerald-900/60 border border-emerald-800/80 p-4 rounded-3xl shadow-md">
-      {state === 'idle' && (
+      {/* ── IDLE: No existing share ─────────────────────────── */}
+      {state === 'idle' && !savedMeta && (
         <button
           onClick={handleShare}
           className="w-full bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-yellow-300 hover:to-amber-400 text-emerald-950 font-black py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 text-sm uppercase tracking-wider shadow-lg transition-all active:scale-[0.98] border border-yellow-300/40"
@@ -94,20 +133,47 @@ export default function ShareButton({ collectionState, displayName }: ShareButto
         </button>
       )}
 
+      {/* ── IDLE: Existing share — show update option ──────── */}
+      {state === 'idle' && savedMeta && (
+        <div className="space-y-2">
+          <button
+            onClick={handleShare}
+            className="w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-black py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 text-sm uppercase tracking-wider shadow-lg transition-all active:scale-[0.98] border border-emerald-400/30"
+          >
+            <RefreshCw className="w-5 h-5 stroke-[2.5]" />
+            Actualizar mi Álbum
+          </button>
+          <div className="flex items-center justify-between px-1">
+            <span className="text-[10px] text-emerald-400 font-mono truncate max-w-[70%]">
+              {shareUrl}
+            </span>
+            <button
+              onClick={handleUnlink}
+              className="text-[9px] text-red-400/70 hover:text-red-300 font-bold uppercase tracking-wider transition flex items-center gap-1 shrink-0"
+            >
+              <Trash2 className="w-3 h-3" />
+              Desvincular
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── GENERATING ──────────────────────────────────────── */}
       {state === 'generating' && (
         <div className="flex items-center justify-center gap-2.5 py-3">
           <Loader2 className="w-5 h-5 animate-spin text-yellow-400" />
           <span className="text-sm font-bold text-emerald-200">
-            Generando enlace...
+            {savedMeta ? 'Actualizando...' : 'Generando enlace...'}
           </span>
         </div>
       )}
 
+      {/* ── DONE ────────────────────────────────────────────── */}
       {state === 'done' && (
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-black text-yellow-400 uppercase tracking-wider font-mono">
-              Enlace generado
+              {savedMeta ? 'Álbum actualizado' : 'Enlace generado'}
             </h3>
             <button
               onClick={handleReset}
@@ -144,17 +210,20 @@ export default function ShareButton({ collectionState, displayName }: ShareButto
           </div>
 
           <p className="text-[10px] text-emerald-400 leading-relaxed text-center font-medium">
-            Cualquier persona con este enlace puede ver tu álbum actual.
+            {savedMeta
+              ? 'Tus cambios están publicados. Cualquier persona con el enlace ve la versión actualizada.'
+              : 'Cualquier persona con este enlace puede ver tu álbum actual.'}
           </p>
         </div>
       )}
 
+      {/* ── ERROR ───────────────────────────────────────────── */}
       {state === 'error' && (
         <div className="space-y-3">
           <div className="flex items-center gap-2 py-2">
             <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
             <p className="text-xs font-bold text-red-300">
-              No se pudo generar el enlace. Intentá de nuevo.
+              No se pudo {savedMeta ? 'actualizar' : 'generar'} el enlace. Intentá de nuevo.
             </p>
           </div>
           <div className="flex gap-2">
