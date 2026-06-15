@@ -267,7 +267,7 @@ export default function ShareButton({ collectionState, displayName }: ShareButto
           <div className="flex items-center gap-2 py-2">
             <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
             <p className="text-xs font-bold text-red-300">
-              No se pudo {savedMeta ? 'actualizar' : 'generar'} el enlace. Intentá de nuevo.
+              No se pudo {savedMeta ? 'actualizar' : 'generar'} el enlace. Intenta de nuevo.
             </p>
           </div>
           <div className="flex gap-2">

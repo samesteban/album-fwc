@@ -151,7 +151,7 @@ export default function AlbumPage({ shareId }: AlbumPageProps) {
           </div>
           <h1 className="text-xl font-black text-white">Error al cargar</h1>
           <p className="text-sm text-emerald-300 text-center max-w-xs leading-relaxed">
-            {error || 'Ocurrió un error inesperado. Intentá de nuevo más tarde.'}
+            {error || 'Ocurrió un error inesperado. Intenta de nuevo más tarde.'}
           </p>
           <a
             href="/"

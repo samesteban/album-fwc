@@ -170,7 +170,7 @@ export default function TradeMatchPage() {
             Primero comparte tu álbum
           </h1>
           <p className="text-sm text-emerald-300 text-center max-w-xs leading-relaxed">
-            Necesitás generar un enlace de tu álbum antes de poder compararlo con otra persona.
+            Necesitas generar un enlace de tu álbum antes de poder compararlo con otra persona.
           </p>
           <a
             href="/"
