@@ -110,8 +110,7 @@ export default function Dashboard({
             <Trophy className="w-5.5 h-5.5 stroke-[2.5]" />
           </div>
           <div>
-            <span className="text-xs uppercase tracking-widest text-emerald-300 font-black font-mono">QATAR & 48 SELECCIONES</span>
-            <h1 className="text-xl font-black tracking-tight text-white">Álbum <span className="text-yellow-400">2026</span> PWA</h1>
+            <h1 className="text-xl font-black tracking-tight text-white">Álbum Copa Mundial <span className="text-yellow-400">FIFA</span> 2026</h1>
           </div>
         </div>
       </div>
