@@ -318,7 +318,7 @@ export default function TradeMatchPage() {
   // ── Results State ────────────────────────────────────────────
 
   if (pageState === 'results' && result) {
-    const totalItems = result.vosLeDas.length + result.elxTeDa.length + result.surplus.length;
+    const totalItems = result.vosLeDas.length + result.elxTeDa.length;
     const isEmpty = totalItems === 0;
 
     return (
@@ -395,11 +395,11 @@ export default function TradeMatchPage() {
               <div>
                 {result.vosLeDas.length > 0 ? (
                   <SectionBlock
-                    title="Entregas"
+                    title="Le sirven"
                     icon={<ArrowRight className="w-4 h-4 stroke-[2.5]" />}
                     items={result.vosLeDas}
                     accent="emerald"
-                    badge=""
+                    badge={`${result.vosLeDas.length} lámina${result.vosLeDas.length !== 1 ? 's' : ''}`}
                   />
                 ) : (
                   <div className="bg-emerald-900/60 border border-emerald-800/80 p-3 rounded-3xl shadow-md text-center h-full flex items-center justify-center">
@@ -413,11 +413,11 @@ export default function TradeMatchPage() {
               <div>
                 {result.elxTeDa.length > 0 ? (
                   <SectionBlock
-                    title="Recibes"
+                    title="Me sirven"
                     icon={<ArrowLeft className="w-4 h-4 stroke-[2.5]" />}
                     items={result.elxTeDa}
                     accent="amber"
-                    badge=""
+                    badge={`${result.elxTeDa.length} lámina${result.elxTeDa.length !== 1 ? 's' : ''}`}
                   />
                 ) : (
                   <div className="bg-emerald-900/60 border border-emerald-800/80 p-3 rounded-3xl shadow-md text-center h-full flex items-center justify-center">
@@ -426,35 +426,6 @@ export default function TradeMatchPage() {
                     </p>
                   </div>
                 )}
-              </div>
-            </div>
-          )}
-
-          {/* Cartas fuera del intercambio */}
-          {result.surplus.length > 0 && (
-            <div className="bg-emerald-900/50 border border-dashed border-emerald-700/60 p-4 rounded-3xl shadow-md">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-emerald-400">
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10" />
-                    <line x1="12" y1="8" x2="12" y2="12" />
-                    <line x1="12" y1="16" x2="12.01" y2="16" />
-                  </svg>
-                </span>
-                <h3 className="text-sm font-black uppercase tracking-tight text-emerald-300">
-                  Fuera del intercambio
-                </h3>
-                <span className="ml-auto text-[10px] bg-emerald-950 text-emerald-400 px-2 py-0.5 rounded-full font-mono font-bold">
-                  {result.surplus.length} carta{result.surplus.length !== 1 ? 's' : ''}
-                </span>
-              </div>
-              <p className="text-[10px] text-emerald-500 mb-3 leading-relaxed font-medium">
-                Estas cartas quedan fuera para que el intercambio sea parejo. Si quieres incluirlas, ajusta el intercambio con la otra persona.
-              </p>
-              <div className="space-y-2">
-                {result.surplus.map(item => (
-                  <TradeItemCard key={item.cardId} item={item} />
-                ))}
               </div>
             </div>
           )}
@@ -545,7 +516,7 @@ function SectionBlock({ title, icon, items, accent, badge, highlighted }: Sectio
           {title}
         </h3>
         {badge && (
-          <span className="ml-auto text-[10px] bg-emerald-950 text-emerald-300 px-2 py-0.5 rounded-full font-mono font-bold">
+          <span className="ml-auto text-[10px] bg-emerald-950 text-emerald-400 px-2 py-0.5 rounded-full font-mono font-bold">
             {badge}
           </span>
         )}
