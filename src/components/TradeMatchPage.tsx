@@ -337,44 +337,45 @@ export default function TradeMatchPage() {
             </div>
           )}
 
-          {/* Results with items */}
+          {/* Results with items — two columns */}
           {!isEmpty && (
-            <>
-              {/* Vos le das */}
-              {result.vosLeDas.length > 0 ? (
-                <SectionBlock
-                  title="Tú le das"
-                  icon={<ArrowRight className="w-4 h-4 stroke-[2.5]" />}
-                  items={result.vosLeDas}
-                  accent="emerald"
-                  badge="Repetidas tuyas"
-                />
-              ) : (
-                <div className="bg-emerald-900/60 border border-emerald-800/80 p-4 rounded-3xl shadow-md text-center">
-                  <p className="text-xs font-bold text-emerald-400">
-                    No tienes repetidas que esta persona necesite
-                  </p>
-                </div>
-              )}
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                {result.vosLeDas.length > 0 ? (
+                  <SectionBlock
+                    title="Tú le das"
+                    icon={<ArrowRight className="w-4 h-4 stroke-[2.5]" />}
+                    items={result.vosLeDas}
+                    accent="emerald"
+                    badge="Tus repetidas"
+                  />
+                ) : (
+                  <div className="bg-emerald-900/60 border border-emerald-800/80 p-3 rounded-3xl shadow-md text-center h-full flex items-center justify-center">
+                    <p className="text-[10px] font-bold text-emerald-400 leading-tight">
+                      Sin repetidas que le sirvan
+                    </p>
+                  </div>
+                )}
+              </div>
 
-              {/* Elx te da */}
-              {result.elxTeDa.length > 0 ? (
-                <SectionBlock
-                  title="Te da"
-                  icon={<ArrowLeft className="w-4 h-4 stroke-[2.5]" />}
-                  items={result.elxTeDa}
-                  accent="amber"
-                  badge="Repetidas de la otra persona"
-                />
-              ) : (
-                <div className="bg-emerald-900/60 border border-emerald-800/80 p-4 rounded-3xl shadow-md text-center">
-                  <p className="text-xs font-bold text-emerald-400">
-                    Esta persona no tiene repetidas que necesites
-                  </p>
-                </div>
-              )}
-
-            </>
+              <div>
+                {result.elxTeDa.length > 0 ? (
+                  <SectionBlock
+                    title="Te da"
+                    icon={<ArrowLeft className="w-4 h-4 stroke-[2.5]" />}
+                    items={result.elxTeDa}
+                    accent="amber"
+                    badge="Sus repetidas"
+                  />
+                ) : (
+                  <div className="bg-emerald-900/60 border border-emerald-800/80 p-3 rounded-3xl shadow-md text-center h-full flex items-center justify-center">
+                    <p className="text-[10px] font-bold text-emerald-400 leading-tight">
+                      Sin repetidas que te sirvan
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
           )}
 
           {/* Back button */}
