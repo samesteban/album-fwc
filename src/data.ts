@@ -387,27 +387,6 @@ export function computeTradeMatches(
     });
   });
 
-  // Balance: trim both lists to the same count, move excess to surplus
-  const balancedCount = Math.min(vosLeDas.length, elxTeDa.length);
-
-  if (vosLeDas.length > balancedCount) {
-    const excess = vosLeDas.splice(balancedCount);
-    excess.forEach(item => {
-      item.category = 'surplus';
-      item.surplusOwner = 'mine';
-    });
-    surplus.push(...excess);
-  }
-
-  if (elxTeDa.length > balancedCount) {
-    const excess = elxTeDa.splice(balancedCount);
-    excess.forEach(item => {
-      item.category = 'surplus';
-      item.surplusOwner = 'theirs';
-    });
-    surplus.push(...excess);
-  }
-
   return { vosLeDas, elxTeDa, matches, surplus };
 }
 

@@ -399,7 +399,7 @@ export default function TradeMatchPage() {
                     icon={<ArrowRight className="w-4 h-4 stroke-[2.5]" />}
                     items={result.vosLeDas}
                     accent="emerald"
-                    badge={`${result.vosLeDas.length} lámina${result.vosLeDas.length !== 1 ? 's' : ''}`}
+                    badge={`${result.vosLeDas.length}`}
                   />
                 ) : (
                   <div className="bg-emerald-900/60 border border-emerald-800/80 p-3 rounded-3xl shadow-md text-center h-full flex items-center justify-center">
@@ -417,7 +417,7 @@ export default function TradeMatchPage() {
                     icon={<ArrowLeft className="w-4 h-4 stroke-[2.5]" />}
                     items={result.elxTeDa}
                     accent="amber"
-                    badge={`${result.elxTeDa.length} lámina${result.elxTeDa.length !== 1 ? 's' : ''}`}
+                    badge={`${result.elxTeDa.length}`}
                   />
                 ) : (
                   <div className="bg-emerald-900/60 border border-emerald-800/80 p-3 rounded-3xl shadow-md text-center h-full flex items-center justify-center">
