@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { ArrowLeft, Loader2, AlertCircle, HelpCircle, Search, CheckCircle, ArrowRight, Trophy } from 'lucide-react';
+import { ArrowLeft, Loader2, AlertCircle, HelpCircle, Search, CheckCircle, ArrowRight } from 'lucide-react';
 import { buildInitialSections, computeTradeMatches } from '../data';
 import type { TradeResult, TradeMatchItem, ShareMetadata } from '../types';
 
@@ -28,29 +28,19 @@ function isValidShareData(raw: unknown): raw is ShareData {
 
 function TradeItemCard({ item }: { item: TradeMatchItem; key?: string }) {
   return (
-    <div className="flex items-center justify-between bg-emerald-950/60 p-3 rounded-2xl border border-emerald-800/70 shadow-sm">
-      <div className="flex items-center gap-2.5 min-w-0">
-        <span className="text-xl shrink-0">{item.sectionFlag}</span>
-        <div className="min-w-0">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="font-mono font-black text-white text-xs bg-emerald-950 px-1.5 py-0.5 rounded border border-emerald-800/50">
-              {item.sectionId} {item.num}
-            </span>
-          </div>
-          {item.playerName && (
-            <p className="text-[11px] text-emerald-300 truncate mt-1 font-semibold leading-relaxed">
-              {item.playerName}
-            </p>
-          )}
+    <div className="flex items-center gap-2.5 bg-emerald-950/60 p-3 rounded-2xl border border-emerald-800/70 shadow-sm">
+      <span className="text-xl shrink-0">{item.sectionFlag}</span>
+      <div className="min-w-0">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          <span className="font-mono font-black text-white text-xs bg-emerald-950 px-1.5 py-0.5 rounded border border-emerald-800/50">
+            {item.sectionId} {item.num}
+          </span>
         </div>
-      </div>
-      <div className="flex items-center gap-2 shrink-0">
-        <span className="text-[10px] font-extrabold bg-emerald-900 text-emerald-200 px-2 py-1 rounded-lg font-mono">
-          Tú: <span className="text-yellow-400">{item.userCount}</span>
-        </span>
-        <span className="text-[10px] font-extrabold bg-emerald-900 text-emerald-200 px-2 py-1 rounded-lg font-mono">
-          Otro: <span className="text-amber-400">{item.otherCount}</span>
-        </span>
+        {item.playerName && (
+          <p className="text-[11px] text-emerald-300 truncate mt-1 font-semibold leading-relaxed">
+            {item.playerName}
+          </p>
+        )}
       </div>
     </div>
   );
@@ -276,7 +266,7 @@ export default function TradeMatchPage() {
   // ── Results State ────────────────────────────────────────────
 
   if (pageState === 'results' && result) {
-    const totalItems = result.vosLeDas.length + result.elxTeDa.length + result.matches.length;
+    const totalItems = result.vosLeDas.length + result.elxTeDa.length;
     const isEmpty = totalItems === 0;
 
     return (
@@ -384,23 +374,6 @@ export default function TradeMatchPage() {
                 </div>
               )}
 
-              {/* Matches 🎯 */}
-              {result.matches.length > 0 ? (
-                <SectionBlock
-                  title="Matches 🎯"
-                  icon={<CheckCircle className="w-4 h-4 stroke-[2.5]" />}
-                  items={result.matches}
-                  accent="yellow"
-                  badge="Intercambio directo"
-                  highlighted
-                />
-              ) : (
-                <div className="bg-emerald-900/60 border border-emerald-800/80 p-4 rounded-3xl shadow-md text-center">
-                  <p className="text-xs font-bold text-emerald-400">
-                    Sin coincidencias directas
-                  </p>
-                </div>
-              )}
             </>
           )}
 
